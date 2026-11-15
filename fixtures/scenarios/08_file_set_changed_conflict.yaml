@@ -1,0 +1,7 @@
+id: file_set_changed_conflict
+name: File set changed since base
+description: A file-set replacement is rejected because an expected file disappeared after its base.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/08_file_set_changed.jsonl
+protocol:
+  allow_safe_rebase: true

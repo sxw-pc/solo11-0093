@@ -1,0 +1,2 @@
+[console_scripts]
+lakecommit = lakecommit.cli:main

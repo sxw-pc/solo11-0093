@@ -1,0 +1,8 @@
+id: idempotency_mismatch
+name: Idempotency payload mismatch
+description: The same writer and key send a different operation and are rejected.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/11_idempotency_mismatch.jsonl
+protocol:
+  allow_safe_rebase: true
+  allow_idempotency_mismatch: true

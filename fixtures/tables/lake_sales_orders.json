@@ -1,0 +1,42 @@
+{
+  "table_name": "lake_sales_orders",
+  "description": "Synthetic orders table used by every offline commit scenario.",
+  "partition_columns": ["region"],
+  "file_fields": ["path", "partition", "size_bytes", "row_count", "content_hash"],
+  "initial_snapshot": {
+    "snapshot_id": "snap-0000",
+    "parent_snapshot_id": null,
+    "sequence": 0,
+    "logical_time": "2024-01-01T00:00:00Z",
+    "files": [
+      {
+        "path": "data/region=ca/part-0001.parquet",
+        "partition": {"region": "ca"},
+        "size_bytes": 320,
+        "row_count": 20,
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      {
+        "path": "data/region=eu/part-0001.parquet",
+        "partition": {"region": "eu"},
+        "size_bytes": 910,
+        "row_count": 70,
+        "content_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      {
+        "path": "data/region=us/part-0001.parquet",
+        "partition": {"region": "us"},
+        "size_bytes": 1200,
+        "row_count": 100,
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "path": "data/region=us/part-0002.parquet",
+        "partition": {"region": "us"},
+        "size_bytes": 780,
+        "row_count": 60,
+        "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    ]
+  }
+}

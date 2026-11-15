@@ -1,0 +1,7 @@
+id: add_partition_conflict
+name: Stale add touches a hot partition
+description: A stale additive commit targets a partition modified after its base snapshot.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/14_add_partition_conflict.jsonl
+protocol:
+  allow_safe_rebase: true
