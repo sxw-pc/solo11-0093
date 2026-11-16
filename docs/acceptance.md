@@ -43,8 +43,8 @@ python tools/network_guard.py scan
 | 无真实密钥/公司/域名/个人信息 | 全部 fixture 为合成主体；静态扫描检查外部 URL | 人工审阅 + `network_guard.py scan` |
 | 输出确定 | 逻辑时钟、内容哈希 ID、键排序、稳定列表 | `tests/test_determinism.py`、golden |
 | 2500–4500 行、单文件 ≤300 | `linecount.py` 预算常量与检查 | `python -m lakecommit linecount`、`tests/test_size_budget.py` |
-| ≥12 个冲突场景 | 14 个 YAML 场景 | `fixtures/scenarios/`、`tests/test_golden.py` |
-| 不接受只有文档/只有 CLI | 实现 + 13 个测试文件 + 14 份 golden | `pytest -q` |
+| ≥12 个冲突场景 | 17 个 YAML 场景 | `fixtures/scenarios/`、`tests/test_golden.py` |
+| 不接受只有文档/只有 CLI | 实现 + 14 个测试文件 + 17 份 golden | `pytest -q` |
 
 ## F1：项目骨架与命令行入口
 
@@ -78,7 +78,7 @@ python -m lakecommit linecount
 | 逻辑路径拒绝绝对路径、`..`、URL、反斜杠、盘符 | `fieldvalidator.validate_file_path` |
 | 分区值匹配声明列 | `fieldvalidator.validate_partition` |
 | 大小/行数非负整数 | `fieldvalidator.validate_file_entry` |
-| 操作类型限定三种 | `validator.validate_operation` |
+| 操作类型限定四种 | `validator.validate_operation` |
 | attempt ID 场景内唯一 | `validator.validate_attempts` |
 | 同 writer+key 载荷一致 | `validator.validate_attempts`（可通过场景协议显式放开，仅用于运行时冲突探针） |
 | 稳定错误码 + location + field_path | `errors.py`、`loader.py` |
@@ -106,11 +106,12 @@ python -m lakecommit linecount
 | `add_files` | `operations.evaluate_add_files` |
 | `replace_partition` | `operations.evaluate_replace_partition` |
 | `replace_file_set` | `operations.evaluate_replace_file_set` |
-| 安全 rebase + 证据 | 三类操作的可证明检查；`commit.json` 与报告记录策略/分区/inserting attempts |
-| 稳定冲突码 | `conflicts.py` + `operations.py` |
+| `swap_file_sets` 跨分区原子交换 | `swap.evaluate_swap`，双侧判定共享一次快照发布；`strict_partition`/`preserve_unrelated` 两条授权路线 |
+| 安全 rebase + 证据 | 四类操作的可证明检查；`commit.json` 与报告记录策略/分区/inserting attempts |
+| 稳定冲突码 | `conflicts.py` + `operations.py` + `swap.py` |
 | 所有判定写入理由列表 | `Decision.reasons`，`explain` 可查 |
 
-测试：`test_protocol.py`、`test_conflicts.py`，golden 场景 01–09、12、14。
+测试：`test_protocol.py`、`test_conflicts.py`、`test_swap.py`，golden 场景 01–09、12、14–17。
 
 ## F5：幂等、重试与重复提交
 
@@ -143,12 +144,12 @@ ls .lakecommit-demo/report.json .lakecommit-demo/report.md .lakecommit-demo/repo
 
 ## F7：Golden 回归与确定性
 
-- `fixtures/expected/` 含 14 份完整规范化报告。
+- `fixtures/expected/` 含 17 份完整规范化报告。
 - `verify-golden` 直接比较规范化对象；缺失或不一致退出 4。
 - 同一场景运行两次，JSON/Markdown/HTML 逐字节一致。
 - 逻辑时钟来自 fixture；snapshot id 由内容哈希生成。
 
-测试：`test_golden.py`（14 个场景 + 退出码 4）、`test_determinism.py`（双次运行逐字节比较 + 无系统时间假设）。
+测试：`test_golden.py`（17 个场景 + 退出码 4）、`test_determinism.py`（双次运行逐字节比较 + 无系统时间假设）。
 
 ## F8：只读本地复核台与离线保护
 
@@ -179,12 +180,13 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8765/api/resul
 | `test_validator.py` | 路径、分区、字段、重复、操作、重试引用 |
 | `test_snapshot_store.py` | 发布、链、变更、篡改、指针 |
 | `test_protocol.py` | 接受/拒绝、rebase、重试、文件集合 |
+| `test_swap.py` | 跨分区原子交换、双侧拒绝、授权路线、重放与重试 |
 | `test_conflicts.py` | 稳定冲突码、理由、重试建议、计数 |
 | `test_idempotency.py` | 载荷身份、重放、冲突、重启持久化 |
 | `test_ledger.py` | 审计行、幂等 JSON、只读重开、无 wall-clock 列 |
 | `test_reports.py` | 三报告产物、指纹、自包含、排序 |
 | `test_server.py` | 路由、405、host 白名单、端口、安全头 |
-| `test_golden.py` | 14 场景 golden、退出码 4 |
+| `test_golden.py` | 17 场景 golden、退出码 4 |
 | `test_determinism.py` | 两次运行字节一致、逻辑时钟 |
 | `test_offline_guard.py` | socket 阻断、离线运行、扫描 |
 | `test_size_budget.py` | 总行数、单文件上限、必需模块/场景/golden |

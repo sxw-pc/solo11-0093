@@ -1,6 +1,5 @@
 from lakecommit import config, linecount
 
-
 def test_code_size_budget_and_per_file_limit():
     report = linecount.collect(config.ROOT)
     assert report["budget_ok"] is True
@@ -8,7 +7,6 @@ def test_code_size_budget_and_per_file_limit():
     assert report["oversized_files"] == []
     assert report["total_lines"] >= 2500
     assert all(item["lines"] <= 300 for item in report["files"])
-
 
 def test_required_modules_scenarios_and_tests_exist():
     paths = {item["path"] for item in linecount.collect(config.ROOT)["files"]}

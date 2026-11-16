@@ -25,7 +25,13 @@ REPORT_HTML = "report.html"
 RUN_META = "run.json"
 
 ALLOWED_BIND_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
-SUPPORTED_OPERATIONS = ("add_files", "replace_partition", "replace_file_set")
+SUPPORTED_OPERATIONS = (
+    "add_files",
+    "replace_partition",
+    "replace_file_set",
+    "swap_file_sets",
+)
+SWAP_AUTHORIZATION_ROUTES = frozenset({"strict_partition", "preserve_unrelated"})
 
 TABLE_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 COLUMN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")

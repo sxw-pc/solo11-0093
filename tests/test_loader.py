@@ -3,7 +3,6 @@ import pytest
 from lakecommit import config, loader, validator
 from lakecommit.errors import InputError, SchemaError
 
-
 def test_bundle_loads_scenario_table_and_attempts(bundle):
     assert bundle.scenario_id == "add_files_accepted"
     assert bundle.table.table_name == "lake_sales_orders"
@@ -17,7 +16,6 @@ def test_bundle_loads_scenario_table_and_attempts(bundle):
     }
     assert bundle.scenario_path.startswith("fixtures/scenarios/")
 
-
 def test_load_json_reports_parse_location(tmp_path):
     path = tmp_path / "broken.json"
     path.write_text('{"a": }', encoding="utf-8")
@@ -27,7 +25,6 @@ def test_load_json_reports_parse_location(tmp_path):
     assert caught.value.exit_code == 2
     assert "line 1" in caught.value.message
 
-
 def test_load_jsonl_reports_line_number(tmp_path):
     path = tmp_path / "broken.jsonl"
     path.write_text('{"ok": 1}\n{"bad"}\n', encoding="utf-8")
@@ -36,13 +33,11 @@ def test_load_jsonl_reports_line_number(tmp_path):
     assert caught.value.code == "JSONL_PARSE_ERROR"
     assert caught.value.location.endswith(":2")
 
-
 def test_missing_file_is_stable_input_error(tmp_path):
     with pytest.raises(InputError) as caught:
         loader.load_json(tmp_path / "missing.json")
     assert caught.value.code == "FILE_NOT_FOUND"
     assert caught.value.exit_code == 2
-
 
 def test_empty_attempt_file_is_rejected(tmp_path):
     path = tmp_path / "empty.jsonl"
@@ -51,7 +46,6 @@ def test_empty_attempt_file_is_rejected(tmp_path):
         loader.load_jsonl(path)
     assert caught.value.code == "ATTEMPTS_EMPTY"
 
-
 def test_idempotency_mismatch_is_caught_by_strict_validation():
     columns = ("region",)
     docs = loader.load_jsonl(config.FIXTURES_DIR / "attempts" / "11_idempotency_mismatch.jsonl")
@@ -59,12 +53,10 @@ def test_idempotency_mismatch_is_caught_by_strict_validation():
         validator.validate_attempts(docs, "attempts.jsonl", columns, check_idempotency=True)
     assert caught.value.code == "IDEMPOTENCY_PAYLOAD_MISMATCH"
 
-
 def test_scenario_is_allowed_to_opt_into_runtime_mismatch_probe():
     bundle = loader.load_bundle(config.SCENARIOS_DIR / "11_idempotency_mismatch.yaml")
     assert bundle.protocol["allow_idempotency_mismatch"] is True
     assert len(bundle.attempts) == 2
-
 
 def test_loader_never_uses_system_time(monkeypatch):
     import time

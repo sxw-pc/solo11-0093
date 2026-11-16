@@ -116,14 +116,11 @@ class Attempt:
     @classmethod
     def from_dict(cls, value: dict) -> "Attempt":
         return cls(
-            attempt_id=str(value["attempt_id"]),
-            writer_id=str(value["writer_id"]),
+            attempt_id=str(value["attempt_id"]), writer_id=str(value["writer_id"]),
             idempotency_key=str(value["idempotency_key"]),
             base_snapshot_id=str(value["base_snapshot_id"]),
-            logical_time=str(value["logical_time"]),
-            operation=value["operation"],
-            retry_of_attempt_id=value.get("retry_of_attempt_id"),
-        )
+            logical_time=str(value["logical_time"]), operation=value["operation"],
+            retry_of_attempt_id=value.get("retry_of_attempt_id"))
 
 
 @dataclass

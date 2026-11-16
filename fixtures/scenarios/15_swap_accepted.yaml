@@ -1,0 +1,7 @@
+id: swap_accepted
+name: Atomic cross-partition swap accepted
+description: One swap attempt replaces expected file sets in two partitions inside a single snapshot, then replays idempotently.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/15_swap_accepted.jsonl
+protocol:
+  allow_safe_rebase: true

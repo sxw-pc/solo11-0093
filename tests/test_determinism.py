@@ -2,7 +2,6 @@ import json
 
 from lakecommit import config, runner
 
-
 def test_two_runs_are_byte_identical(tmp_path):
     scenario = config.SCENARIOS_DIR / "13_mixed_workload.yaml"
     first_dir = tmp_path / "first"
@@ -20,7 +19,6 @@ def test_two_runs_are_byte_identical(tmp_path):
     ]
     assert str(first_dir) not in (first_dir / config.REPORT_JSON).read_text(encoding="utf-8")
     assert str(second_dir) not in (second_dir / config.REPORT_HTML).read_text(encoding="utf-8")
-
 
 def test_logical_clock_only_uses_fixture_values(tmp_path):
     report = runner.run_scenario(

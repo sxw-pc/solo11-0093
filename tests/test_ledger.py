@@ -2,7 +2,6 @@ import json
 
 from lakecommit.ledger import Ledger
 
-
 def test_ledger_records_attempt_decision_and_snapshot_audit(bench):
     decision = bench.engine.submit(bench.bundle.attempts[0])
     rows = bench.ledger.list_attempts()
@@ -23,7 +22,6 @@ def test_ledger_records_attempt_decision_and_snapshot_audit(bench):
     ]
     assert snapshots[1]["operation_type"] == "add_files"
 
-
 def test_idempotency_cache_is_serialized_and_replay_count_is_persisted(bench):
     attempt = bench.bundle.attempts[0]
     first = bench.engine.submit(attempt)
@@ -34,7 +32,6 @@ def test_idempotency_cache_is_serialized_and_replay_count_is_persisted(bench):
     assert stored["replay"] is None
     assert bench.ledger.attempt_count() == 1
     assert bench.ledger.idempotency_count() == 1
-
 
 def test_ledger_can_be_reopened_read_only(bench):
     decision = bench.engine.submit(bench.bundle.attempts[0])
@@ -47,7 +44,6 @@ def test_ledger_can_be_reopened_read_only(bench):
         assert reader.idempotency_count() == 1
     finally:
         reader.close()
-
 
 def test_ledger_schema_contains_no_wall_clock_columns(bench):
     bench.engine.submit(bench.bundle.attempts[0])

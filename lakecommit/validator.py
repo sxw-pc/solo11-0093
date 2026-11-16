@@ -13,6 +13,7 @@ from lakecommit.fieldvalidator import (
     validate_file_list,
     validate_logical_file_path,
     validate_partition,
+    validate_swap_operation,
 )
 from lakecommit.fingerprint import object_fingerprint
 from lakecommit.models import Attempt, FileEntry, Snapshot, TableSpec
@@ -91,6 +92,8 @@ def validate_operation(value: object, columns: tuple[str, ...], location: str, f
             location=location,
             field_path=f"{field_path}.type",
         )
+    if operation_type == "swap_file_sets":
+        return validate_swap_operation(operation, columns, location, field_path)
     files = validate_file_list(operation.get("files"), columns, location, f"{field_path}.files")
     if operation_type == "add_files":
         return {"type": operation_type, "files": [item.to_dict() for item in files]}

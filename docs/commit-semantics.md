@@ -76,6 +76,32 @@
 - expected 之外的并发变化不影响判定；这是显式文件集合语义。
 - 被接受时，先移除 expected 文件，再加入新文件。
 
+### swap_file_sets（跨分区原子交换）
+
+```json
+{
+  "type": "swap_file_sets",
+  "swap_id": "swap-gen-015",
+  "authorization": "strict_partition",
+  "groups": [
+    {"partition": {"region": "us"}, "expected_files": ["..."], "files": [FileEntry, ...]},
+    {"partition": {"region": "eu"}, "expected_files": ["..."], "files": [FileEntry, ...]}
+  ]
+}
+```
+
+- 两个 `groups` 必须声明两个**不同**分区；两组 `expected_files` 必须互不相交，替换路径也不得跨组重复或与任何 expected 路径重叠（结构校验阶段拒绝）。
+- 每个替换文件必须属于该组声明的分区；每个 expected 文件在 base 中必须存在且实际所属分区与声明一致，否则 `SWAP_EXPECTED_PARTITION_MISMATCH`。
+- 双侧判定共享同一 base/current：任一 expected 文件在 current 中缺失或完整指纹（路径、分区、大小、行数、内容哈希）相对 base 变化，整个交换以 `FILE_SET_CHANGED_SINCE_BASE` 拒绝，**没有单侧发布**。
+- 替换路径与 expected 集合之外的 current 文件冲突 → `FILE_PATH_DUPLICATE`，同样整体拒绝。
+- 通过所有检查时只物化一次：从 current 移除两组 expected 后加入全部替换文件，协议只发布**一个**快照，`touched_partitions` 同时包含两个分区，rebase 策略为 `SWAP_PARTITION_REBASE`。
+- `swap_id` 是版本配对标识，参与载荷哈希；同一 writer/key 下改动 `swap_id` 或 `authorization` 都会得到不同的 payload_hash。
+- 陈旧 base 的两条授权路线（仅在 base 与 current 不同时有区别）：
+  - `strict_partition`：任一目标分区出现在 base 之后的 `touched_partitions` 中即 `SWAP_PARTITION_TOUCHED_SINCE_BASE`，`retry_required=true`，本次交换不发布业务快照。
+  - `preserve_unrelated`：忽略目标分区内与 expected 无关的并发追加，只要 expected 指纹未变就接受并保留这些追加；若 expected 本身被并发替换，仍以 `FILE_SET_CHANGED_SINCE_BASE` 拒绝。
+- 两条路线都保证 expected 集合的原子替换与无丢失；对同一个“不相关并发追加”场景，前者拒绝、后者接受并保留追加，因此业务快照是否发布不同。
+- 协议 `allow_safe_rebase=false` 时，陈旧 base 上即使 `preserve_unrelated` 也会以 `STALE_BASE_REBASE_DISABLED` 拒绝。
+
 ## 分区触碰的定义
 
 一个接受快照会记录 `touched_partitions`：
@@ -99,6 +125,9 @@
 | `REPLACE_PARTITION_CONFLICT` | 陈旧 base 的整分区替换冲突 | true |
 | `FILE_SET_CHANGED_SINCE_BASE` | expected 文件缺失或指纹变化 | true |
 | `STALE_BASE_REBASE_DISABLED` | 协议显式禁止安全 rebase | true |
+| `SWAP_EXPECTED_PARTITION_MISMATCH` | 交换的 expected 文件不属于声明分区 | false |
+| `SWAP_PARTITION_TOUCHED_SINCE_BASE` | strict_partition 交换的目标分区被并发触碰 | true |
+| `SWAP_PATH_OVERLAP` | 交换替换路径与 expected 路径重叠（结构校验） | false |
 
 需要 rebase/retry 的 writer 应重新读取 current，生成新的 base snapshot、新的 attempt id，并通常使用新的 idempotency key；如果沿用旧 key，因 base 已变，载荷哈希也会变化，从而得到 `IDEMPOTENCY_PAYLOAD_MISMATCH`。
 

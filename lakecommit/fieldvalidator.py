@@ -7,7 +7,7 @@ from pathlib import PurePosixPath
 
 from lakecommit import config
 from lakecommit.errors import SchemaError
-from lakecommit.models import FileEntry
+from lakecommit.models import FileEntry, partition_label
 
 
 def _mapping(value: object, location: str, field_path: str, code: str) -> dict:
@@ -154,6 +154,82 @@ def validate_file_document(
     )
 
 
+def _swap_group(value: object, columns: tuple[str, ...], location: str, field_path: str) -> dict:
+    group = _mapping(value, location, field_path, "SWAP_GROUP_INVALID")
+    partition = validate_partition(
+        group.get("partition"), columns, location, f"{field_path}.partition"
+    )
+    expected_raw = group.get("expected_files")
+    if not isinstance(expected_raw, list) or not expected_raw:
+        raise SchemaError("EXPECTED_FILES_REQUIRED", "swap group expected_files must be a non-empty array",
+                          location=location, field_path=f"{field_path}.expected_files")
+    expected = [
+        validate_logical_file_path(item, location, f"{field_path}.expected_files[{index}]")
+        for index, item in enumerate(expected_raw)]
+    if len(set(expected)) != len(expected):
+        raise SchemaError("DUP_EXPECTED_FILE", "swap group expected_files may not repeat a path",
+                          location=location, field_path=f"{field_path}.expected_files")
+    files = validate_file_list(group.get("files"), columns, location, f"{field_path}.files")
+    for index, entry in enumerate(files):
+        if entry.partition != partition:
+            raise SchemaError(
+                "SWAP_GROUP_FILE_MISMATCH",
+                "every replacement file must belong to its declared swap partition",
+                location=location, field_path=f"{field_path}.files[{index}].partition")
+    return {"partition": partition, "expected_files": sorted(expected),
+            "files": [entry.to_dict() for entry in files]}
+
+
+def validate_swap_operation(
+    operation: dict, columns: tuple[str, ...], location: str, field_path: str,
+) -> dict:
+    swap_id = _identifier(
+        operation.get("swap_id"), location, f"{field_path}.swap_id",
+        config.OBJECT_ID_RE, "swap id",
+    )
+    authorization = operation.get("authorization")
+    if authorization not in config.SWAP_AUTHORIZATION_ROUTES:
+        raise SchemaError(
+            "SWAP_AUTHORIZATION_INVALID",
+            f"authorization must be one of {sorted(config.SWAP_AUTHORIZATION_ROUTES)}",
+            location=location, field_path=f"{field_path}.authorization",
+        )
+    groups_raw = operation.get("groups")
+    if not isinstance(groups_raw, list) or len(groups_raw) != 2:
+        raise SchemaError(
+            "SWAP_GROUPS_REQUIRED", "a swap must declare exactly two groups",
+            location=location, field_path=f"{field_path}.groups",
+        )
+    groups = [
+        _swap_group(item, columns, location, f"{field_path}.groups[{index}]")
+        for index, item in enumerate(groups_raw)
+    ]
+    labels = [partition_label(group["partition"], columns) for group in groups]
+    if labels[0] == labels[1]:
+        raise SchemaError(
+            "SWAP_PARTITION_MISMATCH", "the two swap groups must target different partitions",
+            location=location, field_path=f"{field_path}.groups", details={"partitions": labels},
+        )
+    expected_sets = [set(group["expected_files"]) for group in groups]
+    shared = sorted(expected_sets[0] & expected_sets[1])
+    if shared:
+        raise SchemaError("DUP_EXPECTED_FILE", "expected file sets must be disjoint across swap groups",
+                          location=location, field_path=f"{field_path}.groups", details={"paths": shared})
+    replacement_paths = [entry["path"] for group in groups for entry in group["files"]]
+    if len(set(replacement_paths)) != len(replacement_paths):
+        duplicates = sorted(
+            {path for path in replacement_paths if replacement_paths.count(path) > 1})
+        raise SchemaError("DUP_FILE_PATH", "replacement files may not repeat a path across swap groups",
+                          location=location, field_path=f"{field_path}.groups", details={"paths": duplicates})
+    overlaps = sorted(set(replacement_paths) & (expected_sets[0] | expected_sets[1]))
+    if overlaps:
+        raise SchemaError("SWAP_PATH_OVERLAP", "replacement paths may not overlap any expected file",
+                          location=location, field_path=f"{field_path}.groups", details={"paths": overlaps})
+    ordered = sorted(groups, key=lambda group: partition_label(group["partition"], columns))
+    return {"type": "swap_file_sets", "swap_id": swap_id,
+            "authorization": authorization, "groups": ordered}
+
+
 def validate_file_list(value: object, columns, location, field_path) -> list[FileEntry]:
     if not isinstance(value, list) or not value:
         raise SchemaError(
@@ -161,16 +237,10 @@ def validate_file_list(value: object, columns, location, field_path) -> list[Fil
         )
     files = [
         validate_file_document(item, columns, location, f"{field_path}[{index}]")
-        for index, item in enumerate(value)
-    ]
+        for index, item in enumerate(value)]
     paths = [item.path for item in files]
     duplicates = sorted({path for path in paths if paths.count(path) > 1})
     if duplicates:
-        raise SchemaError(
-            "DUP_FILE_PATH",
-            "files may not repeat a path",
-            location=location,
-            field_path=field_path,
-            details={"paths": duplicates},
-        )
+        raise SchemaError("DUP_FILE_PATH", "files may not repeat a path",
+                          location=location, field_path=field_path, details={"paths": duplicates})
     return sorted(files, key=lambda item: item.path)

@@ -36,43 +36,28 @@ def _reject(
     )
 
 
-def _rebase_evidence(
-    base: Snapshot,
-    current: Snapshot,
-    changes: list[dict],
-    strategy: str,
-    checked: list[str],
-) -> dict:
+def _rebase_evidence(base: Snapshot, current: Snapshot, changes: list[dict],
+                     strategy: str, checked: list[str]) -> dict:
     return {
         "base_snapshot_id": base.snapshot_id,
         "current_snapshot_id": current.snapshot_id,
         "intervening_snapshot_ids": [str(commit["snapshot_id"]) for commit in changes],
         "intervening_attempt_ids": [
-            str(commit["attempt_id"]) for commit in changes if commit.get("attempt_id")
-        ],
+            str(commit["attempt_id"]) for commit in changes if commit.get("attempt_id")],
         "strategy": strategy,
         "checked_partitions": sorted(set(checked)),
     }
 
 
-def _accepted(
-    current: Snapshot,
-    files: list[FileEntry],
-    attempt: Attempt,
-    base: Snapshot,
-    changes: list[dict],
-    columns: tuple[str, ...],
-    strategy: str,
-    checked: list[str],
-    allow_safe_rebase: bool,
-) -> EvalResult:
+def _accepted(current: Snapshot, files: list[FileEntry], attempt: Attempt, base: Snapshot,
+              changes: list[dict], columns: tuple[str, ...], strategy: str,
+              checked: list[str], allow_safe_rebase: bool) -> EvalResult:
     stale = base.snapshot_id != current.snapshot_id
     if stale and not allow_safe_rebase:
         detail = {"base_snapshot_id": base.snapshot_id, "current_snapshot_id": current.snapshot_id}
         return _reject(
             [reason(Code.STALE_BASE_REBASE_DISABLED, "safe rebase is disabled by the scenario protocol", details=detail)],
-            [Code.STALE_BASE_REBASE_DISABLED],
-        )
+            [Code.STALE_BASE_REBASE_DISABLED])
     rebase = _rebase_evidence(base, current, changes, strategy, checked) if stale else None
     if rebase:
         detail = {"base_snapshot_id": base.snapshot_id, "current_snapshot_id": current.snapshot_id, "strategy": strategy}
@@ -85,14 +70,10 @@ def _accepted(
     touched = {partition_label(entry.partition, columns) for entry in ordered if entry.path not in current_paths}
     touched.update(partition_label(entry.partition, columns) for entry in current.files if entry.path not in result_paths)
     return EvalResult(
-        accepted=True,
-        files=ordered,
-        reasons=reasons,
-        rebase=rebase,
+        accepted=True, files=ordered, reasons=reasons, rebase=rebase,
         touched_partitions=sorted(touched),
         added_paths=sorted(result_paths - current_paths),
-        removed_paths=sorted(current_paths - result_paths),
-    )
+        removed_paths=sorted(current_paths - result_paths))
 
 
 def _partition_touched(changes: list[dict]) -> set[str]:
@@ -110,14 +91,7 @@ def _duplicate_reason(paths: list[str], message: str) -> dict:
     )
 
 
-def evaluate_add(
-    attempt: Attempt,
-    base: Snapshot,
-    current: Snapshot,
-    changes: list[dict],
-    columns: tuple[str, ...],
-    allow_safe_rebase: bool,
-) -> EvalResult:
+def evaluate_add(attempt: Attempt, base: Snapshot, current: Snapshot, changes: list[dict], columns: tuple[str, ...], allow_safe_rebase: bool) -> EvalResult:
     files = [FileEntry.from_dict(item) for item in attempt.operation["files"]]
     codes: list[str] = []
     reasons: list[dict] = []
@@ -140,26 +114,11 @@ def evaluate_add(
     if codes:
         return _reject(reasons, codes)
     return _accepted(
-        current,
-        list(current.files) + files,
-        attempt,
-        base,
-        changes,
-        columns,
-        "ADDITIVE_REBASE",
-        partitions,
-        allow_safe_rebase,
-    )
+        current, list(current.files) + files, attempt, base, changes, columns,
+        "ADDITIVE_REBASE", partitions, allow_safe_rebase)
 
 
-def evaluate_replace_partition(
-    attempt: Attempt,
-    base: Snapshot,
-    current: Snapshot,
-    changes: list[dict],
-    columns: tuple[str, ...],
-    allow_safe_rebase: bool,
-) -> EvalResult:
+def evaluate_replace_partition(attempt: Attempt, base: Snapshot, current: Snapshot, changes: list[dict], columns: tuple[str, ...], allow_safe_rebase: bool) -> EvalResult:
     files = [FileEntry.from_dict(item) for item in attempt.operation["files"]]
     target = {key: str(attempt.operation["partition"][key]) for key in sorted(attempt.operation["partition"])}
     target_label = partition_label(target, columns)
@@ -173,43 +132,22 @@ def evaluate_replace_partition(
     stale = base.snapshot_id != current.snapshot_id
     if stale and target_label in _partition_touched(changes):
         codes.extend([Code.REPLACE_PARTITION_CONFLICT, Code.PARTITION_TOUCHED_SINCE_BASE])
-        reasons.append(
-            reason(
-                Code.REPLACE_PARTITION_CONFLICT,
-                "the target partition changed after the base snapshot",
-                details={"partition": target_label, "base_snapshot_id": base.snapshot_id, "current_snapshot_id": current.snapshot_id},
-            )
-        )
-        reasons.append(
-            reason(
-                Code.PARTITION_TOUCHED_SINCE_BASE,
-                "partition replacement requires a current base snapshot",
-                details={"partitions": [target_label]},
-            )
-        )
+        reasons.append(reason(
+            Code.REPLACE_PARTITION_CONFLICT,
+            "the target partition changed after the base snapshot",
+            details={"partition": target_label, "base_snapshot_id": base.snapshot_id, "current_snapshot_id": current.snapshot_id}))
+        reasons.append(reason(
+            Code.PARTITION_TOUCHED_SINCE_BASE,
+            "partition replacement requires a current base snapshot",
+            details={"partitions": [target_label]}))
     if codes:
         return _reject(reasons, codes)
     return _accepted(
-        current,
-        outside + files,
-        attempt,
-        base,
-        changes,
-        columns,
-        "PARTITION_REPLACE_REBASE",
-        [target_label],
-        allow_safe_rebase,
-    )
+        current, outside + files, attempt, base, changes, columns,
+        "PARTITION_REPLACE_REBASE", [target_label], allow_safe_rebase)
 
 
-def evaluate_replace_file_set(
-    attempt: Attempt,
-    base: Snapshot,
-    current: Snapshot,
-    changes: list[dict],
-    columns: tuple[str, ...],
-    allow_safe_rebase: bool,
-) -> EvalResult:
+def evaluate_replace_file_set(attempt: Attempt, base: Snapshot, current: Snapshot, changes: list[dict], columns: tuple[str, ...], allow_safe_rebase: bool) -> EvalResult:
     expected = sorted(str(item) for item in attempt.operation["expected_files"])
     files = [FileEntry.from_dict(item) for item in attempt.operation["files"]]
     base_map = base.files_by_path()
@@ -225,22 +163,16 @@ def evaluate_replace_file_set(
     reasons: list[dict] = []
     if missing_base:
         codes.append(Code.FILE_SET_CHANGED_SINCE_BASE)
-        reasons.append(
-            reason(
-                Code.FILE_SET_CHANGED_SINCE_BASE,
-                "expected file set is not present in the base snapshot",
-                details={"paths": missing_base},
-            )
-        )
+        reasons.append(reason(
+            Code.FILE_SET_CHANGED_SINCE_BASE,
+            "expected file set is not present in the base snapshot",
+            details={"paths": missing_base}))
     if changed:
         codes.append(Code.FILE_SET_CHANGED_SINCE_BASE)
-        reasons.append(
-            reason(
-                Code.FILE_SET_CHANGED_SINCE_BASE,
-                "one or more expected files changed or disappeared after the base snapshot",
-                details={"paths": sorted(changed)},
-            )
-        )
+        reasons.append(reason(
+            Code.FILE_SET_CHANGED_SINCE_BASE,
+            "one or more expected files changed or disappeared after the base snapshot",
+            details={"paths": sorted(changed)}))
     remaining = {entry.path for entry in current.files if entry.path not in set(expected)}
     collisions = sorted(remaining & {entry.path for entry in files})
     if collisions:
@@ -251,32 +183,20 @@ def evaluate_replace_file_set(
     result = [entry for entry in current.files if entry.path not in set(expected)] + files
     touched = [
         partition_label(entry.partition, columns)
-        for entry in current.files
-        if entry.path in set(expected)
+        for entry in current.files if entry.path in set(expected)
     ] + [partition_label(entry.partition, columns) for entry in files]
     return _accepted(
-        current,
-        result,
-        attempt,
-        base,
-        changes,
-        columns,
-        "FILE_SET_REPLACE_REBASE",
-        touched,
-        allow_safe_rebase,
-    )
+        current, result, attempt, base, changes, columns,
+        "FILE_SET_REPLACE_REBASE", touched, allow_safe_rebase)
 
 
-def evaluate_operation(
-    attempt: Attempt,
-    base: Snapshot,
-    current: Snapshot,
-    changes: list[dict],
-    columns: tuple[str, ...],
-    allow_safe_rebase: bool,
-) -> EvalResult:
+def evaluate_operation(attempt: Attempt, base: Snapshot, current: Snapshot, changes: list[dict], columns: tuple[str, ...], allow_safe_rebase: bool) -> EvalResult:
     if attempt.operation_type == "add_files":
         return evaluate_add(attempt, base, current, changes, columns, allow_safe_rebase)
     if attempt.operation_type == "replace_partition":
         return evaluate_replace_partition(attempt, base, current, changes, columns, allow_safe_rebase)
+    if attempt.operation_type == "swap_file_sets":
+        from lakecommit.swap import evaluate_swap
+
+        return evaluate_swap(attempt, base, current, changes, columns, allow_safe_rebase)
     return evaluate_replace_file_set(attempt, base, current, changes, columns, allow_safe_rebase)

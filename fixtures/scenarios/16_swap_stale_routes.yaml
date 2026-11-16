@@ -1,0 +1,7 @@
+id: swap_stale_routes
+name: Stale swap authorization routes
+description: An unrelated concurrent append is rejected by strict_partition but accepted and preserved by preserve_unrelated with a safe rebase.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/16_swap_stale_routes.jsonl
+protocol:
+  allow_safe_rebase: true

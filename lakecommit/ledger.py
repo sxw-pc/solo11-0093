@@ -94,14 +94,9 @@ class Ledger:
         ).fetchone()
         return dict(row) if row else None
 
-    def _insert_attempt(
-        self,
-        decision: Decision,
-        payload_hash: str,
-        *,
-        replay_of_attempt_id: str | None = None,
-        replay_count: int = 0,
-    ) -> None:
+    def _insert_attempt(self, decision: Decision, payload_hash: str, *,
+                        replay_of_attempt_id: str | None = None,
+                        replay_count: int = 0) -> None:
         attempt = decision.attempt
         try:
             self.connection.execute(
@@ -114,31 +109,16 @@ class Ledger:
                   replay_of_attempt_id, replay_count
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    attempt.attempt_id,
-                    attempt.writer_id,
-                    attempt.idempotency_key,
-                    attempt.base_snapshot_id,
-                    attempt.logical_time,
-                    attempt.operation_type,
-                    canonical_json(attempt.operation),
-                    payload_hash,
-                    decision.status,
-                    decision.outcome,
-                    canonical_json(decision.conflict_codes),
-                    canonical_json(decision.reasons),
-                    decision.resulting_snapshot_id,
-                    int(decision.retry_required),
-                    replay_of_attempt_id,
-                    replay_count,
-                ),
-            )
+                (attempt.attempt_id, attempt.writer_id, attempt.idempotency_key,
+                 attempt.base_snapshot_id, attempt.logical_time, attempt.operation_type,
+                 canonical_json(attempt.operation), payload_hash, decision.status,
+                 decision.outcome, canonical_json(decision.conflict_codes),
+                 canonical_json(decision.reasons), decision.resulting_snapshot_id,
+                 int(decision.retry_required), replay_of_attempt_id, replay_count))
         except sqlite3.IntegrityError as exc:
             raise StateError(
-                "ATTEMPT_ID_DUPLICATE",
-                "attempt id already exists in the audit ledger",
-                details={"attempt_id": attempt.attempt_id},
-            ) from exc
+                "ATTEMPT_ID_DUPLICATE", "attempt id already exists in the audit ledger",
+                details={"attempt_id": attempt.attempt_id}) from exc
 
     def record_attempt(self, decision: Decision, payload_hash: str) -> None:
         with self.connection:

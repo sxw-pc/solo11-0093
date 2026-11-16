@@ -5,7 +5,6 @@ import pytest
 from lakecommit import config, runner
 from lakecommit.errors import GoldenMismatchError
 
-
 def test_every_scenario_matches_its_committed_golden(tmp_path):
     scenarios = runner.list_scenarios()
     assert len(scenarios) >= 12
@@ -21,7 +20,6 @@ def test_every_scenario_matches_its_committed_golden(tmp_path):
         assert report["state_verification"]["ok"] is True
     expected_ids = {path.stem for path in config.EXPECTED_DIR.glob("*.json")}
     assert scenario_ids <= expected_ids
-
 
 def test_golden_mismatch_has_exit_code_four(tmp_path):
     workdir = tmp_path / "tampered"

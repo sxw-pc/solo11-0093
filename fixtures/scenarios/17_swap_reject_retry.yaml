@@ -1,0 +1,7 @@
+id: swap_reject_retry
+name: Stale swap rejected then retried
+description: A concurrent replacement of an expected file rejects the stale swap under either route; a fresh-base retry swaps the new expected set.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/17_swap_reject_retry.jsonl
+protocol:
+  allow_safe_rebase: true

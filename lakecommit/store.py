@@ -34,19 +34,12 @@ class SnapshotStore:
             raise SchemaError("INITIAL_SNAPSHOT_INVALID", "initial snapshot must be sequence 0 with no parent")
         files = snapshot_helpers.normalize_files(initial_snapshot.files)
         commit = snapshot_helpers.build_initial_commit(
-            initial_snapshot.snapshot_id,
-            initial_snapshot.logical_time,
-            files,
-            partition_columns,
-        )
+            initial_snapshot.snapshot_id, initial_snapshot.logical_time,
+            files, partition_columns)
         manifest = snapshot_helpers.build_manifest(
-            snapshot_id=initial_snapshot.snapshot_id,
-            parent_snapshot_id=None,
-            sequence=0,
-            logical_time=initial_snapshot.logical_time,
-            files=files,
-            commit=commit,
-        )
+            snapshot_id=initial_snapshot.snapshot_id, parent_snapshot_id=None,
+            sequence=0, logical_time=initial_snapshot.logical_time,
+            files=files, commit=commit)
         self._write_snapshot(manifest, commit)
         self._set_current(initial_snapshot.snapshot_id)
         return snapshot_helpers.snapshot_from_manifest(manifest, files)
@@ -134,45 +127,24 @@ class SnapshotStore:
         )
 
     def commit_snapshot(
-        self,
-        *,
-        files: list[FileEntry],
-        attempt: Attempt,
-        payload_hash: str,
-        base_snapshot_id: str,
-        touched_partitions: list[str],
-        added_paths: list[str],
-        removed_paths: list[str],
-        rebase: dict | None,
+        self, *, files: list[FileEntry], attempt: Attempt, payload_hash: str,
+        base_snapshot_id: str, touched_partitions: list[str],
+        added_paths: list[str], removed_paths: list[str], rebase: dict | None,
     ) -> tuple[Snapshot, dict]:
         parent = self.current_snapshot()
         sequence = parent.sequence + 1
         snapshot_id = snapshot_helpers.next_snapshot_id(
-            parent.snapshot_id, sequence, attempt.attempt_id, payload_hash, attempt.logical_time
-        )
+            parent.snapshot_id, sequence, attempt.attempt_id, payload_hash, attempt.logical_time)
         commit = snapshot_helpers.build_commit(
-            snapshot_id=snapshot_id,
-            parent_snapshot_id=parent.snapshot_id,
-            sequence=sequence,
-            logical_time=attempt.logical_time,
-            attempt_id=attempt.attempt_id,
-            writer_id=attempt.writer_id,
-            operation_type=attempt.operation_type,
-            base_snapshot_id=base_snapshot_id,
-            payload_hash=payload_hash,
-            touched_partitions=touched_partitions,
-            added_paths=added_paths,
-            removed_paths=removed_paths,
-            rebase=rebase,
-        )
+            snapshot_id=snapshot_id, parent_snapshot_id=parent.snapshot_id,
+            sequence=sequence, logical_time=attempt.logical_time,
+            attempt_id=attempt.attempt_id, writer_id=attempt.writer_id,
+            operation_type=attempt.operation_type, base_snapshot_id=base_snapshot_id,
+            payload_hash=payload_hash, touched_partitions=touched_partitions,
+            added_paths=added_paths, removed_paths=removed_paths, rebase=rebase)
         manifest = snapshot_helpers.build_manifest(
-            snapshot_id=snapshot_id,
-            parent_snapshot_id=parent.snapshot_id,
-            sequence=sequence,
-            logical_time=attempt.logical_time,
-            files=files,
-            commit=commit,
-        )
+            snapshot_id=snapshot_id, parent_snapshot_id=parent.snapshot_id,
+            sequence=sequence, logical_time=attempt.logical_time, files=files, commit=commit)
         self._write_snapshot(manifest, commit)
         self._set_current(snapshot_id)
         return snapshot_helpers.snapshot_from_manifest(manifest, files), commit

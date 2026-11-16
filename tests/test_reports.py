@@ -3,7 +3,6 @@ import json
 from lakecommit import config
 from lakecommit.fingerprint import object_fingerprint
 
-
 def test_all_three_report_artifacts_are_written_and_self_contained(run_workdir):
     report_text = (run_workdir / config.REPORT_JSON).read_text(encoding="utf-8")
     markdown = (run_workdir / config.REPORT_MD).read_text(encoding="utf-8")
@@ -30,7 +29,6 @@ def test_all_three_report_artifacts_are_written_and_self_contained(run_workdir):
     assert report_text.endswith("\n")
     assert markdown.endswith("\n")
     assert html.endswith("\n")
-
 
 def test_json_is_key_sorted_for_stable_diffs(run_workdir):
     text = (run_workdir / config.REPORT_JSON).read_text(encoding="utf-8")

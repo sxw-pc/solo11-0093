@@ -76,6 +76,9 @@ DIR/
 | `add_files` | 增加文件；当前快照已存在的路径冲突；陈旧 base 上若目标分区被后续提交触碰则冲突，否则可安全 rebase |
 | `replace_partition` | 替换目标分区全部文件；陈旧 base 上目标分区被后续提交触碰则冲突 |
 | `replace_file_set` | 显式期望一组 base 文件并替换；任一期望文件消失或指纹变化则冲突 |
+| `swap_file_sets` | 一次 attempt 内原子交换两个不同分区的 expected 文件集合；任一侧不满足则整体拒绝、不发布单侧快照，通过则只生成一个快照 |
+
+`swap_file_sets` 额外携带 `swap_id`（版本配对标识）、`authorization` 授权路线与两个 `groups`（各含分区、expected 文件、替换文件）。陈旧 base 上存在并发追加时：`strict_partition` 视任一目标分区被触碰为冲突（`SWAP_PARTITION_TOUCHED_SINCE_BASE`）；`preserve_unrelated` 保留未涉及的并发文件并在 expected 指纹未变的前提下安全 rebase。两种路线都保证 expected 的原子替换与无丢失。
 
 所有操作都从当前快照重新物化文件清单；被接受的陈旧提交会在 `commit.json` 和报告中记录 rebase 证据（原 base、当前快照、 intervening attempt/snapshot、策略、检查分区）。
 
@@ -91,6 +94,9 @@ DIR/
 - `VALIDATION_ERROR`
 - `STALE_BASE_REBASE_DISABLED`
 - `STATE_INTEGRITY_ERROR`
+- `SWAP_EXPECTED_PARTITION_MISMATCH`
+- `SWAP_PARTITION_TOUCHED_SINCE_BASE`
+- `SWAP_PATH_OVERLAP`
 
 `explain` 会展示判定时产生的全部 reason 记录，包括被接受时使用的 base/rebase 信息。
 

@@ -60,6 +60,16 @@ def render_html(report: dict) -> str:
         rebase = ""
         if attempt.get("rebase"):
             rebase = f'<pre class="evidence">{_json(attempt["rebase"])}</pre>'
+        swap_note = ""
+        if attempt["operation_type"] == "swap_file_sets":
+            operation = attempt["operation"]
+            partitions = ", ".join(
+                _json(group["partition"]) for group in operation["groups"]
+            )
+            swap_note = (
+                f'<p class="note">Atomic swap <code>{_e(operation["swap_id"])}</code>'
+                f' ({_e(operation["authorization"])}) across {partitions}</p>'
+            )
         codes = "".join(f'<span class="badge">{_e(code)}</span>' for code in attempt["conflict_codes"])
         attempt_html.append(
             f'<article class="attempt {state}">'
@@ -70,7 +80,7 @@ def render_html(report: dict) -> str:
             f'<span>op <code>{_e(attempt["operation_type"])}</code></span>'
             f'<span>time <code>{_e(attempt["logical_time"])}</code></span></div>'
             f'<div class="badges">{codes}</div>'
-            f'{replay}{rebase}'
+            f'{replay}{rebase}{swap_note}'
             f'<details><summary>Decision reasons and payload</summary><ul class="reasons">'
             f'{_reason_html(attempt["reasons"])}</ul><pre class="evidence">{_json(attempt["operation"])}</pre></details>'
             f'</article>'

@@ -4,7 +4,6 @@ from lakecommit import idempotency
 from lakecommit.ledger import Ledger
 from lakecommit.protocol import ProtocolEngine
 
-
 def test_payload_hash_excludes_transport_fields_but_includes_base_and_operation(bench):
     attempt = bench.bundle.attempts[0]
     moved = replace(attempt, attempt_id="other-id", logical_time="2024-02-01T00:00:00Z")
@@ -13,7 +12,6 @@ def test_payload_hash_excludes_transport_fields_but_includes_base_and_operation(
     assert idempotency.payload_hash(attempt) != idempotency.payload_hash(other_base)
     other_operation = replace(attempt, operation={"type": "add_files", "files": []})
     assert idempotency.payload_hash(attempt) != idempotency.payload_hash(other_operation)
-
 
 def test_replay_returns_first_snapshot_without_creating_another(bench):
     attempt = bench.bundle.attempts[0]
@@ -36,7 +34,6 @@ def test_replay_returns_first_snapshot_without_creating_another(bench):
     }
     assert len(bench.store.chain()) == 2
     assert any(item["code"] == "IDEMPOTENT_REPLAY" for item in second.reasons)
-
 
 def test_same_key_different_payload_is_rejected_and_does_not_replace_first(bench):
     attempt = bench.bundle.attempts[0]
@@ -64,7 +61,6 @@ def test_same_key_different_payload_is_rejected_and_does_not_replace_first(bench
     record = bench.ledger.get_idempotency(attempt.writer_id, attempt.idempotency_key)
     assert record["first_attempt_id"] == attempt.attempt_id
     assert record["payload_hash"] == first.payload_hash
-
 
 def test_idempotency_cache_survives_new_engine_and_ledger_connection(bench):
     attempt = bench.bundle.attempts[0]

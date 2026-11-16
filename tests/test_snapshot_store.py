@@ -3,7 +3,6 @@ import json
 from lakecommit import snapshot as snapshot_helpers
 from lakecommit.errors import StateError
 
-
 def test_publish_writes_manifest_commit_and_pointer(bench):
     decision = bench.engine.submit(bench.bundle.attempts[0])
     assert decision.status == "accepted"
@@ -19,7 +18,6 @@ def test_publish_writes_manifest_commit_and_pointer(bench):
     commit = bench.store.load_commit(snapshot_id)
     assert commit["attempt_id"] == "a-alpha-001"
     assert commit["touched_partitions"] == ["region=us"]
-
 
 def test_chain_ancestry_and_changes_are_deterministic(bench):
     first = bench.engine.submit(bench.bundle.attempts[0])
@@ -50,7 +48,6 @@ def test_chain_ancestry_and_changes_are_deterministic(bench):
     changes = bench.store.changes_since("snap-0000", ids[0])
     assert [item["attempt_id"] for item in changes] == ["a-alpha-001", "a-alpha-001b"]
 
-
 def test_verify_detects_tampered_manifest_hash(bench):
     decision = bench.engine.submit(bench.bundle.attempts[0])
     manifest_path = bench.store.snapshots_dir / decision.resulting_snapshot_id / "manifest.json"
@@ -62,13 +59,11 @@ def test_verify_detects_tampered_manifest_hash(bench):
     assert "MANIFEST_HASH_MISMATCH" in {item["code"] for item in verification["errors"]}
     assert any(not check["ok"] for check in verification["checks"])
 
-
 def test_verify_detects_unresolvable_current_pointer(bench):
     bench.store._set_current("snap-does-not-exist")
     verification = bench.store.verify()
     assert verification["ok"] is False
     assert verification["errors"][0]["code"] == "CURRENT_POINTER_UNRESOLVED"
-
 
 def test_unknown_snapshot_is_not_loadable(bench):
     try:

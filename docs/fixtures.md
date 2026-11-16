@@ -95,10 +95,11 @@ protocol:
 - `add_files`
 - `replace_partition`
 - `replace_file_set`
+- `swap_file_sets`
 
 更完整语义见 [commit-semantics.md](commit-semantics.md)。
 
-## 14 个场景
+## 17 个场景
 
 | 文件 | 场景 ID | 覆盖点 |
 | --- | --- | --- |
@@ -116,16 +117,13 @@ protocol:
 | `12_reject_then_retry.yaml` | `reject_then_retry` | 拒绝后基于新快照重试成功 |
 | `13_mixed_workload.yaml` | `mixed_workload` | 多 writer 混合、demo |
 | `14_add_partition_conflict.yaml` | `add_partition_conflict` | 陈旧增量触碰已变分区 |
+| `15_swap_accepted.yaml` | `swap_accepted` | 跨分区原子交换接受与幂等重放 |
+| `16_swap_stale_routes.yaml` | `swap_stale_routes` | 同一不相关追加下 strict/preserve 两条路线分叉 |
+| `17_swap_reject_retry.yaml` | `swap_reject_retry` | expected 被并发替换后拒绝，新 base 重试成功 |
 
-### 12 号场景的生成快照 ID
+### 确定性快照 ID 与重试 base
 
-`12_reject_then_retry.jsonl` 中第三个尝试使用第一个尝试生成的快照 ID：
-
-```text
-snap-0001-35b11505a737
-```
-
-这个 ID 由 attempt `a-alpha-012` 的确定性内容计算得出。若修改该场景前两个 attempt 的操作、ID 或逻辑时间，需要重新生成该 base 值，并重新生成 golden。
+`12_reject_then_retry.jsonl`、`17_swap_reject_retry.jsonl` 中重试尝试使用前序接受提交生成的快照 ID（例如 `snap-0001-35b11505a737`、`snap-0001-404de0d43be2`）。这些 ID 由对应 attempt 的确定性内容计算得出。若修改前序 attempt 的操作、ID 或逻辑时间，需要重新生成该 base 值，并重新生成 golden。
 
 ## Golden
 

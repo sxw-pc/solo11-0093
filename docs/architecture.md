@@ -43,6 +43,7 @@ scenario.yaml
 | `snapshot.py` | 规范化文件清单、manifest/commit 哈希、确定性 snapshot id |
 | `store.py` | 本地不可变快照目录、原子 current 指针、快照链与完整性校验 |
 | `operations.py` | 纯内存文件级操作判定与 rebase 证据构造 |
+| `swap.py` | `swap_file_sets` 双侧 expected 指纹、分区归属与授权路线的原子判定 |
 | `idempotency.py` | 幂等载荷哈希、首次结果重放、载荷不一致拒绝 |
 | `ledger.py` | SQLite `attempt_audit`、`idempotency_cache`、`snapshot_audit` |
 | `protocol.py` | 判定顺序、base 检查、陈旧 base 处理、快照发布、台账写入 |
@@ -99,6 +100,7 @@ state/
 - `add_files`：新增路径与 current 无重复，且新增文件涉及的分区没有在 base 之后被触碰。
 - `replace_partition`：陈旧 base 上目标分区没有在 base 之后被触碰。
 - `replace_file_set`：所有 expected 文件仍在 current 中且指纹与 base 相同，新增路径不与集合外文件冲突。
+- `swap_file_sets`：两个不同分区的 expected 集合在 current 中均保持 base 指纹且互不相交；`preserve_unrelated` 路线保留目标分区内无关的并发追加，`strict_partition` 路线在任一目标分区被触碰时拒绝。双侧检查共享一次判定，通过后只发布一个快照。
 
 接受时 parent 始终指向真正 current 快照，而不是旧 base；commit 同时记录逻辑 base 和 rebase 证据，保证“writer 基于哪个快照提交”可追溯。
 

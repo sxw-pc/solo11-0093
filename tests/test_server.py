@@ -3,7 +3,6 @@ import pytest
 from lakecommit.errors import InputError
 from lakecommit.server import create_app, validate_bind_host, validate_port
 
-
 def test_read_only_app_serves_report_and_json_views(run_workdir):
     app = create_app(run_workdir)
     client = app.test_client()
@@ -25,18 +24,15 @@ def test_read_only_app_serves_report_and_json_views(run_workdir):
     assert client.get("/healthz").get_json()["mode"] == "read-only"
     assert client.head("/api/result").status_code == 200
 
-
 def test_write_methods_are_rejected(run_workdir):
     client = create_app(run_workdir).test_client()
     response = client.post("/api/result", json={"attempt": "x"})
     assert response.status_code == 405
     assert response.get_json()["error"]["code"] == "READ_ONLY"
 
-
 @pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
 def test_loopback_hosts_are_allowed(host):
     assert validate_bind_host(host) == host
-
 
 @pytest.mark.parametrize("host", ["0.0.0.0", "192.0.2.10", "example.test", "::"])
 def test_non_loopback_hosts_are_rejected(host):
@@ -45,13 +41,11 @@ def test_non_loopback_hosts_are_rejected(host):
     assert caught.value.code == "NON_LOOPBACK_HOST"
     assert caught.value.exit_code == 2
 
-
 def test_ports_are_bounded():
     assert validate_port(8765) == 8765
     for value in (0, 65536, -1, True):
         with pytest.raises(InputError):
             validate_port(value)
-
 
 def test_missing_report_is_an_input_error(tmp_path):
     with pytest.raises(InputError) as caught:

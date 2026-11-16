@@ -93,6 +93,15 @@ def render_markdown(report: dict) -> str:
         lines.append(f"#### {index}. `{attempt['attempt_id']}`")
         lines.append("")
         lines.extend(_reason_lines(attempt["reasons"]))
+        if attempt["operation_type"] == "swap_file_sets":
+            operation = attempt["operation"]
+            partitions = [
+                canonical_json(group["partition"]) for group in operation["groups"]
+            ]
+            lines.append(
+                f"  - Atomic swap `{operation['swap_id']}`"
+                f" ({operation['authorization']}) across {', '.join(partitions)}"
+            )
         if attempt.get("replay"):
             lines.append(f"  - Replay source: `{attempt['replay']['replay_of_attempt_id']}`; ordinal {attempt['replay']['replay_count']}")
         if attempt.get("rebase"):

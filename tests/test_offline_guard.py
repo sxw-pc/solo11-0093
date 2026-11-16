@@ -6,14 +6,12 @@ from lakecommit import config, runner
 from lakecommit.errors import NetworkBlockedError
 from tools.network_guard import blocked_network, scan_offline
 
-
 def test_guard_blocks_outbound_sockets():
     with blocked_network():
         with pytest.raises(NetworkBlockedError):
             socket.create_connection(("example.test", 443), timeout=0.1)
         with pytest.raises(NetworkBlockedError):
             socket.getaddrinfo("example.test", 443)
-
 
 def test_demo_path_runs_without_network_and_scanner_is_clean(tmp_path):
     with blocked_network():

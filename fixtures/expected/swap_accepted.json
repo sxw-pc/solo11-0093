@@ -1,0 +1,327 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "a-swap-015",
+      "base_snapshot_id": "snap-0000",
+      "conflict_codes": [],
+      "idempotency_key": "idem-swap-015",
+      "logical_time": "2024-01-01T00:15:00Z",
+      "operation": {
+        "authorization": "strict_partition",
+        "groups": [
+          {
+            "expected_files": [
+              "data/region=eu/part-0001.parquet"
+            ],
+            "files": [
+              {
+                "content_hash": "e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1",
+                "partition": {
+                  "region": "eu"
+                },
+                "path": "data/region=eu/part-0010.parquet",
+                "row_count": 71,
+                "size_bytes": 920
+              }
+            ],
+            "partition": {
+              "region": "eu"
+            }
+          },
+          {
+            "expected_files": [
+              "data/region=us/part-0001.parquet",
+              "data/region=us/part-0002.parquet"
+            ],
+            "files": [
+              {
+                "content_hash": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+                "partition": {
+                  "region": "us"
+                },
+                "path": "data/region=us/part-0010.parquet",
+                "row_count": 62,
+                "size_bytes": 880
+              }
+            ],
+            "partition": {
+              "region": "us"
+            }
+          }
+        ],
+        "swap_id": "swap-gen-015",
+        "type": "swap_file_sets"
+      },
+      "operation_type": "swap_file_sets",
+      "outcome": "applied",
+      "payload_hash": "bfe8e25542c771a09f9dd2221c756f6fd134f47f8890ea267eec822d88da4dc4",
+      "reasons": [
+        {
+          "code": "ACCEPTED_ON_CURRENT_BASE",
+          "details": {
+            "snapshot_id": "snap-0000"
+          },
+          "message": "attempt was evaluated against the current snapshot",
+          "severity": "info"
+        }
+      ],
+      "rebase": null,
+      "replay": null,
+      "resulting_snapshot_id": "snap-0001-bc69d0d91e6d",
+      "retry_of_attempt_id": null,
+      "retry_required": false,
+      "snapshot_created": true,
+      "status": "accepted",
+      "writer_id": "writer-swap"
+    },
+    {
+      "attempt_id": "a-swap-015-replay",
+      "base_snapshot_id": "snap-0000",
+      "conflict_codes": [],
+      "idempotency_key": "idem-swap-015",
+      "logical_time": "2024-01-01T00:15:10Z",
+      "operation": {
+        "authorization": "strict_partition",
+        "groups": [
+          {
+            "expected_files": [
+              "data/region=eu/part-0001.parquet"
+            ],
+            "files": [
+              {
+                "content_hash": "e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1",
+                "partition": {
+                  "region": "eu"
+                },
+                "path": "data/region=eu/part-0010.parquet",
+                "row_count": 71,
+                "size_bytes": 920
+              }
+            ],
+            "partition": {
+              "region": "eu"
+            }
+          },
+          {
+            "expected_files": [
+              "data/region=us/part-0001.parquet",
+              "data/region=us/part-0002.parquet"
+            ],
+            "files": [
+              {
+                "content_hash": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+                "partition": {
+                  "region": "us"
+                },
+                "path": "data/region=us/part-0010.parquet",
+                "row_count": 62,
+                "size_bytes": 880
+              }
+            ],
+            "partition": {
+              "region": "us"
+            }
+          }
+        ],
+        "swap_id": "swap-gen-015",
+        "type": "swap_file_sets"
+      },
+      "operation_type": "swap_file_sets",
+      "outcome": "replayed",
+      "payload_hash": "bfe8e25542c771a09f9dd2221c756f6fd134f47f8890ea267eec822d88da4dc4",
+      "reasons": [
+        {
+          "code": "ACCEPTED_ON_CURRENT_BASE",
+          "details": {
+            "snapshot_id": "snap-0000"
+          },
+          "message": "attempt was evaluated against the current snapshot",
+          "severity": "info"
+        },
+        {
+          "code": "IDEMPOTENT_REPLAY",
+          "details": {
+            "first_attempt_id": "a-swap-015",
+            "replay_count": 1
+          },
+          "message": "duplicate submission returned the first stored decision",
+          "severity": "info"
+        }
+      ],
+      "rebase": null,
+      "replay": {
+        "replay_count": 1,
+        "replay_of_attempt_id": "a-swap-015",
+        "replayed": true
+      },
+      "resulting_snapshot_id": "snap-0001-bc69d0d91e6d",
+      "retry_of_attempt_id": null,
+      "retry_required": false,
+      "snapshot_created": false,
+      "status": "accepted",
+      "writer_id": "writer-swap"
+    }
+  ],
+  "final_snapshot": {
+    "file_count": 3,
+    "files": [
+      {
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "partition": {
+          "region": "ca"
+        },
+        "path": "data/region=ca/part-0001.parquet",
+        "row_count": 20,
+        "size_bytes": 320
+      },
+      {
+        "content_hash": "e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1",
+        "partition": {
+          "region": "eu"
+        },
+        "path": "data/region=eu/part-0010.parquet",
+        "row_count": 71,
+        "size_bytes": 920
+      },
+      {
+        "content_hash": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0010.parquet",
+        "row_count": 62,
+        "size_bytes": 880
+      }
+    ],
+    "logical_time": "2024-01-01T00:15:00Z",
+    "manifest_hash": "b79999ca7549000d1f1349a6f3677445dd54e9c66363c92969b8cd90a157c012",
+    "parent_snapshot_id": "snap-0000",
+    "sequence": 1,
+    "snapshot_id": "snap-0001-bc69d0d91e6d"
+  },
+  "initial_snapshot": {
+    "file_count": 4,
+    "logical_time": "2024-01-01T00:00:00Z",
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "protocol": {
+    "allow_idempotency_mismatch": false,
+    "allow_safe_rebase": true
+  },
+  "run_fingerprint": "67b21189eaf5636bd1ae50fa97d2cf6c42526ee8df7c018f0b448f3a597ddb62",
+  "scenario": {
+    "description": "One swap attempt replaces expected file sets in two partitions inside a single snapshot, then replays idempotently.",
+    "id": "swap_accepted",
+    "name": "Atomic cross-partition swap accepted"
+  },
+  "schema_version": "1.0",
+  "snapshot_chain": [
+    {
+      "added_paths": [
+        "data/region=ca/part-0001.parquet",
+        "data/region=eu/part-0001.parquet",
+        "data/region=us/part-0001.parquet",
+        "data/region=us/part-0002.parquet"
+      ],
+      "attempt_id": null,
+      "file_count": 4,
+      "logical_time": "2024-01-01T00:00:00Z",
+      "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+      "operation_type": "bootstrap",
+      "parent_snapshot_id": null,
+      "rebase": null,
+      "removed_paths": [],
+      "sequence": 0,
+      "snapshot_id": "snap-0000",
+      "touched_partitions": [
+        "region=ca",
+        "region=eu",
+        "region=us"
+      ],
+      "writer_id": null
+    },
+    {
+      "added_paths": [
+        "data/region=eu/part-0010.parquet",
+        "data/region=us/part-0010.parquet"
+      ],
+      "attempt_id": "a-swap-015",
+      "file_count": 3,
+      "logical_time": "2024-01-01T00:15:00Z",
+      "manifest_hash": "b79999ca7549000d1f1349a6f3677445dd54e9c66363c92969b8cd90a157c012",
+      "operation_type": "swap_file_sets",
+      "parent_snapshot_id": "snap-0000",
+      "rebase": null,
+      "removed_paths": [
+        "data/region=eu/part-0001.parquet",
+        "data/region=us/part-0001.parquet",
+        "data/region=us/part-0002.parquet"
+      ],
+      "sequence": 1,
+      "snapshot_id": "snap-0001-bc69d0d91e6d",
+      "touched_partitions": [
+        "region=eu",
+        "region=us"
+      ],
+      "writer_id": "writer-swap"
+    }
+  ],
+  "state_verification": {
+    "checks": [
+      {
+        "name": "current_pointer_resolves",
+        "ok": true
+      },
+      {
+        "name": "parent_chain_contiguous",
+        "ok": true
+      },
+      {
+        "name": "manifest_hashes_match",
+        "ok": true
+      },
+      {
+        "name": "commit_metadata_consistent",
+        "ok": true
+      },
+      {
+        "name": "file_paths_unique",
+        "ok": true
+      },
+      {
+        "name": "no_orphan_snapshots",
+        "ok": true
+      }
+    ],
+    "current_snapshot_id": "snap-0001-bc69d0d91e6d",
+    "errors": [],
+    "ok": true,
+    "snapshot_count": 2
+  },
+  "summary": {
+    "accepted": 2,
+    "applied": 1,
+    "attempts": 2,
+    "conflict_code_counts": {},
+    "final_file_count": 3,
+    "rejected": 0,
+    "replayed": 1,
+    "retry_required": 0,
+    "safe_rebases": 0,
+    "snapshots_created": 1
+  },
+  "table": {
+    "file_fields": [
+      "path",
+      "partition",
+      "size_bytes",
+      "row_count",
+      "content_hash"
+    ],
+    "partition_columns": [
+      "region"
+    ],
+    "table_name": "lake_sales_orders"
+  }
+}

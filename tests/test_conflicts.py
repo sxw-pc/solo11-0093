@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from lakecommit import conflicts
 from lakecommit.conflicts import Code, reason
 
-
 def test_all_required_conflict_codes_are_stable():
     required = {
         "BASE_SNAPSHOT_UNKNOWN",
@@ -17,7 +16,6 @@ def test_all_required_conflict_codes_are_stable():
     assert required <= set(conflicts.CONFLICT_CODES)
     assert len(set(conflicts.CONFLICT_CODES)) == len(conflicts.CONFLICT_CODES)
 
-
 def test_reason_has_stable_shape_and_optional_details():
     value = reason(Code.FILE_PATH_DUPLICATE, "duplicate", details={"paths": ["b", "a"]})
     assert value == {
@@ -28,10 +26,8 @@ def test_reason_has_stable_shape_and_optional_details():
     }
     assert "details" not in reason("X", "plain")
 
-
 def test_unique_codes_preserve_first_occurrence_order():
     assert conflicts.unique_codes(["B", "A", "B", "C", "A"]) == ["B", "A", "C"]
-
 
 def test_rebase_requirement_and_conflict_counts():
     decisions = [
