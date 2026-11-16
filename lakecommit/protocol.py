@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from lakecommit import conflicts, idempotency, validator
+from lakecommit import conflicts, idempotency, journal, validator
 from lakecommit.conflicts import Code, reason
-from lakecommit.errors import SchemaError
+from lakecommit.errors import SchemaError, StateError
 from lakecommit.fingerprint import object_fingerprint
 from lakecommit.ledger import Ledger
 from lakecommit.models import Attempt, Decision, TableSpec
 from lakecommit.operations import evaluate_operation
+from lakecommit.recovery import Recovery, RecoveryResult
 from lakecommit.store import SnapshotStore
 
 
@@ -25,6 +26,9 @@ class ProtocolEngine:
         self.ledger = ledger
         self.protocol = protocol or {"allow_safe_rebase": True}
         self.allow_safe_rebase = bool(self.protocol.get("allow_safe_rebase", True))
+        self.recoveries: list[RecoveryResult] = Recovery(
+            store, ledger, self.protocol
+        ).run()
 
     def submit_document(self, document: object) -> Decision:
         try:
@@ -71,6 +75,49 @@ class ProtocolEngine:
         self.ledger.record_attempt(decision, digest)
         return decision
 
+    def _recovery_gate(self, attempt: Attempt, digest: str) -> Decision | None:
+        """Read the persisted recovery conclusion before evaluating this attempt."""
+        stored = self.ledger.get_recovery(attempt.attempt_id)
+        if stored is None:
+            return None
+        if (
+            stored["writer_id"] != attempt.writer_id
+            or stored["idempotency_key"] != attempt.idempotency_key
+        ):
+            raise StateError(
+                "RECOVERY_EVIDENCE_CONFLICT",
+                "resubmitted attempt disagrees with the recorded recovery conclusion",
+                details={"attempt_id": attempt.attempt_id},
+            )
+        if stored["payload_hash"] != digest:
+            decision = idempotency.mismatch_decision(
+                attempt, digest, str(stored["attempt_id"])
+            )
+            if not self.ledger.attempt_exists(attempt.attempt_id):
+                self.ledger.record_attempt(decision, digest)
+            return decision
+        if stored["route"] != "complete":
+            return None
+        record = self.ledger.get_idempotency(attempt.writer_id, attempt.idempotency_key)
+        if record is None or record["first_snapshot_id"] != stored["snapshot_id"]:
+            raise StateError(
+                "RECOVERY_EVIDENCE_MISSING",
+                "recovered completion has no matching idempotency first result",
+                details={"attempt_id": attempt.attempt_id},
+            )
+        return Decision(
+            attempt=attempt,
+            status="accepted",
+            outcome="recovered",
+            payload_hash=digest,
+            reasons=stored["reasons"],
+            conflict_codes=[],
+            retry_required=False,
+            resulting_snapshot_id=stored["snapshot_id"],
+            snapshot_created=False,
+            replay=None,
+        )
+
     def submit(self, attempt: Attempt) -> Decision:
         try:
             attempt = validator.validate_attempt_document(
@@ -84,13 +131,17 @@ class ProtocolEngine:
             )
 
         digest = idempotency.payload_hash(attempt)
+        recovered = self._recovery_gate(attempt, digest)
+        if recovered is not None:
+            return recovered
         existing = self.ledger.get_idempotency(attempt.writer_id, attempt.idempotency_key)
         if existing:
             if existing["payload_hash"] != digest:
                 decision = idempotency.mismatch_decision(
                     attempt, digest, str(existing["first_attempt_id"])
                 )
-                self.ledger.record_attempt(decision, digest)
+                if not self.ledger.attempt_exists(attempt.attempt_id):
+                    self.ledger.record_attempt(decision, digest)
                 return decision
             replay_count = self.ledger.claim_replay(
                 attempt.writer_id, attempt.idempotency_key
@@ -152,7 +203,10 @@ class ProtocolEngine:
             self._record_first(decision, digest)
             return decision
 
-        snapshot, commit = self.store.commit_snapshot(
+        return self._publish(attempt, digest, result)
+
+    def _publish(self, attempt: Attempt, digest: str, result) -> Decision:
+        manifest, commit = self.store.prepare_snapshot(
             files=result.files,
             attempt=attempt,
             payload_hash=digest,
@@ -162,6 +216,21 @@ class ProtocolEngine:
             removed_paths=result.removed_paths,
             rebase=result.rebase,
         )
+        journal.write_intent(
+            self.store,
+            {
+                "attempt_id": attempt.attempt_id,
+                "attempt": attempt.to_dict(),
+                "snapshot_id": manifest["snapshot_id"],
+                "parent_snapshot_id": manifest["parent_snapshot_id"],
+                "sequence": manifest["sequence"],
+                "payload_hash": digest,
+                "manifest": manifest,
+                "commit": commit,
+            },
+        )
+        snapshot = self.store.publish_prepared(manifest, commit)
+        self.store.publish_current(snapshot.snapshot_id)
         self.ledger.audit_snapshot(snapshot, commit)
         decision = Decision.accepted(
             attempt,
@@ -171,6 +240,7 @@ class ProtocolEngine:
             rebase=result.rebase,
         )
         self._record_first(decision, digest)
+        journal.clear_intent(self.store, attempt.attempt_id)
         return decision
 
     def _reject_base(

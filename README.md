@@ -53,7 +53,8 @@ DIR/
 ├── run.json                     # 场景元数据（非稳定报告）
 └── state/
     ├── current                  # 仅在快照完整写完后原子替换
-    ├── ledger.sqlite3           # 审计台账、幂等缓存、快照审计
+    ├── ledger.sqlite3           # 审计台账、幂等缓存、快照审计、恢复审计
+    ├── journal/                 # 发布意图与恢复结论（提交确认后清理意图）
     └── snapshots/
         └── <snapshot_id>/
             ├── manifest.json
@@ -105,6 +106,16 @@ base_snapshot_id + operation
 attempt id 与 logical time 是传输元数据，不参与载荷哈希，因此“换了 attempt id、逻辑时间更晚但操作相同”的重复提交会返回首次结果。base 或操作不同则触发 `IDEMPOTENCY_PAYLOAD_MISMATCH`。
 
 首次判定（接受或拒绝）和重放次数都会写入 SQLite；新进程重建 `Ledger` 和 `ProtocolEngine` 后仍可重放。重放不会新增快照。
+
+## 发布中恢复
+
+接受路径落盘完整提交意图后再发布快照、切换 `current`、写审计与幂等首结果。若进程在任一 Store 边界中断，同一工作目录下次打开时 `ProtocolEngine` 会先恢复未确认提交：
+
+- `protocol.recovery_route: complete`（默认）安全完成原提交；`rollback` 回到已验证父快照并让该 attempt 重新判定。
+- 已确认提交永不回退；同一 writer/key/载荷再次提交返回 `outcome=recovered`，不同载荷仍返回 `IDEMPOTENCY_PAYLOAD_MISMATCH`。
+- 恢复结论写入 `journal/` 与 `recovery_audit`，并且优先于后续重提；证据缺失、冲突或存在后续确认提交时返回稳定状态错误并阻止新提交。
+
+详见[提交语义](docs/commit-semantics.md)与[架构说明](docs/architecture.md)。
 
 ## 场景清单
 

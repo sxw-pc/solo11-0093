@@ -42,6 +42,12 @@ scenario.yaml
 | `models.py` | FileEntry、Snapshot、Attempt、Decision、ScenarioBundle |
 | `snapshot.py` | 规范化文件清单、manifest/commit 哈希、确定性 snapshot id |
 | `store.py` | 本地不可变快照目录、原子 current 指针、快照链与完整性校验 |
+| `verification.py` | 只读快照链完整性检查（由 `store.verify` 委托） |
+| `journal.py` | 持久化发布意图与恢复结论文件 |
+| `recovery.py` | 打开工作目录时解析未确认发布，选择 complete / rollback |
+| `recovery_evidence.py` | 意图、已发布快照与幂等确认的证据核验 |
+| `ledger_recovery.py` | `recovery_audit` 持久化、恢复辅助查询 |
+| `ledger_schema.py` | SQLite 表结构（审计、幂等、快照、恢复） |
 | `operations.py` | 纯内存文件级操作判定与 rebase 证据构造 |
 | `idempotency.py` | 幂等载荷哈希、首次结果重放、载荷不一致拒绝 |
 | `ledger.py` | SQLite `attempt_audit`、`idempotency_cache`、`snapshot_audit` |
@@ -60,6 +66,9 @@ scenario.yaml
 state/
 ├── current
 ├── ledger.sqlite3
+├── journal/
+│   ├── <attempt>.intent.json
+│   └── <attempt>.resolution.json
 └── snapshots/
     ├── snap-0000/
     │   ├── manifest.json
@@ -120,4 +129,15 @@ state/
 
 ## 一致性边界
 
-快照发布与 SQLite 记录不是一个跨文件系统事务：先发布快照，再写台账和幂等缓存。若进程在两步之间崩溃，可能出现“快照已发布但台账未记录”的孤儿状态；`store.verify()` 会检查 current 可达性与孤儿目录。该项目定位为验证台，不实现生产级 WAL/恢复协议。
+接受路径先把完整提交意图写入 `state/journal/<attempt>.intent.json`（含 manifest、commit 与 header 字段），再依次发布不可变快照目录、切换 `current`、写 `snapshot_audit`、写 attempt 审计与幂等首结果，最后删除意图。任一步中断后，重新打开工作目录时 `ProtocolEngine` 先运行恢复：
+
+1. 读取意图并做自校验（manifest 哈希、commit 哈希、snapshot/parent/sequence 一致）。
+2. 检查快照目录是否存在且与其意图一致；检查幂等缓存是否已确认该 attempt。
+3. 若已确认 → `already_confirmed`，只清理意图，绝不回退。
+4. 否则按 `protocol.recovery_route` 选择：
+   - `complete`：在父快照仍是 current 或快照已是 current/current 祖先时补写缺失步骤。
+   - `rollback`：仅当 current 仍是该快照或其父快照时，切换回父快照并删除未确认快照目录。
+5. 结论写入 `journal/<attempt>.resolution.json` 与 `recovery_audit`；首次写入的路线优先，重复恢复只重放该路线。
+6. 扫描 current 链：任何非初始快照都必须同时有 `snapshot_audit` 与幂等确认，否则 `RECOVERY_EVIDENCE_MISSING`。
+
+`store.verify()` 仍然只做结构检查，不触发恢复；恢复由新的 `ProtocolEngine` 实例在提交前完成。该项目定位为验证台，不实现生产级 WAL/恢复协议。

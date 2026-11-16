@@ -62,9 +62,11 @@ def build_report(
     decisions: list[Decision],
     store: SnapshotStore,
     verification: dict,
+    recoveries: list[dict] | None = None,
 ) -> dict:
     chain = _snapshot_chain_rows(store)
     final = store.current_snapshot()
+    recovery_rows = list(recoveries or [])
     report = {
         "schema_version": config.SCHEMA_VERSION,
         "scenario": bundle.to_report_meta(),
@@ -94,6 +96,8 @@ def build_report(
         "summary": _summary(decisions, chain),
         "state_verification": verification,
     }
+    if recovery_rows:
+        report["recoveries"] = recovery_rows
     report["run_fingerprint"] = object_fingerprint(report)
     return report
 

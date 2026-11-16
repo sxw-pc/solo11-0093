@@ -21,11 +21,13 @@
 ## 一致性与崩溃恢复
 
 - 快照目录先完整写入临时目录，再 rename 为不可变目录；`current` 通过临时文件 + `os.replace` 原子替换。
-- 但“发布快照”“写 SQLite 审计台账”“写幂等首结果”不是一个跨存储事务。
-- 进程若在快照发布后、台账/幂等缓存提交前崩溃，可能出现快照可达但台账缺失，或幂等缓存缺失的状态。`verify` 能发现部分结构性异常（如不可达快照），但不做自动修复。
-- 没有 WAL 协调、恢复日志、幂等补偿任务或崩溃一致性测试。
+- “发布快照”“写 SQLite 审计台账”“写幂等首结果”仍不是一个跨存储事务，但接受路径现在先在 `state/journal/<attempt>.intent.json` 持久化完整提交意图，再依次发布快照目录、切换 current、写 snapshot_audit、写 attempt_audit 与幂等首结果，全部完成后删除意图。
+- 进程在上述任一边界中断后，下一次打开同一工作目录时 `ProtocolEngine` 会先执行恢复：用意图、不可变快照、current 与台账证据判定该提交是“尚未确认”还是“已确认”。
+- 恢复路线是显式的：`protocol.recovery_route` 取 `complete`（默认，安全完成原提交）或 `rollback`（回到已验证父快照并删除未确认快照目录）。结论写入 `journal`、`recovery_audit` 与恢复后的 attempt 审计；已记录的路线优先，重复恢复不会反复切换，已确认提交永远不会被回退。
+- 证据缺失（可达快照没有 audit 或幂等首结果）、证据冲突（意图 manifest/commit 与已发布快照或幂等缓存不一致）、过期 current、多个未决意图时给出稳定 `StateError` 并阻止新提交，不猜测修复。
+- 恢复只覆盖单进程顺序到达的 attempt；不实现 WAL 协调、租赁、分布式恢复或并发补偿。
 - `verify` 检查：current 可解析、parent/sequence 连续、文件清单哈希、commit 中 snapshot/sequence/parent 一致、路径唯一、无不可达快照目录。
-- `verify` 不重新计算或验证所有 commit 字段，不验证 commit 的密码学签名，也不检测恶意同时改写 manifest 与 commit 的攻击。
+- `verify` 不重新计算或验证所有 commit 字段，不验证 commit 的密码学签名，也不检测恶意同时改写 manifest 与 commit 的攻击。`verify` 本身不执行恢复，恢复入口是重新打开 `ProtocolEngine`。
 
 ## 幂等缓存边界
 
@@ -74,7 +76,7 @@
 
 ## 规模与依赖
 
-- 总代码预算 2500–4500 行、单文件 ≤300 行，这会限制功能广度；新增能力前需先评估预算。
+- 总代码预算 2500–6000 行、单文件 ≤300 行，这会限制功能广度；新增能力前需先评估预算。
 - 运行期第三方依赖仅 PyYAML 与 Flask；Flask 开发服务器不是生产 WSGI 部署方案。
 - 未在多种操作系统/文件系统上做兼容性矩阵；本项目在 Windows 上开发验证，路径以 POSIX 风格逻辑路径表达。
 - 不支持 Python 3.9 及以下。

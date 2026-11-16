@@ -218,6 +218,17 @@ def validate_scenario_document(value: object, location: str) -> dict:
     attempts_ref = _string(scenario.get("attempts"), location, "attempts")
     raw_protocol = scenario.get("protocol", config.default_protocol())
     protocol = _mapping(raw_protocol, location, "protocol", "PROTOCOL_INVALID")
+    return {
+        "id": scenario_id,
+        "name": name,
+        "description": description,
+        "table": table_ref,
+        "attempts": attempts_ref,
+        "protocol": _protocol_document(protocol, location),
+    }
+
+
+def _protocol_document(protocol: dict, location: str) -> dict:
     allow_safe_rebase = protocol.get("allow_safe_rebase", True)
     allow_idempotency_mismatch = protocol.get("allow_idempotency_mismatch", False)
     for field, value in (
@@ -231,14 +242,18 @@ def validate_scenario_document(value: object, location: str) -> dict:
                 location=location,
                 field_path=f"protocol.{field}",
             )
-    return {
-        "id": scenario_id,
-        "name": name,
-        "description": description,
-        "table": table_ref,
-        "attempts": attempts_ref,
-        "protocol": {
-            "allow_safe_rebase": allow_safe_rebase,
-            "allow_idempotency_mismatch": allow_idempotency_mismatch,
-        },
+    value = {
+        "allow_safe_rebase": allow_safe_rebase,
+        "allow_idempotency_mismatch": allow_idempotency_mismatch,
     }
+    if "recovery_route" in protocol:
+        route = protocol["recovery_route"]
+        if route not in config.RECOVERY_ROUTES:
+            raise SchemaError(
+                "RECOVERY_ROUTE_INVALID",
+                f"recovery_route must be one of {list(config.RECOVERY_ROUTES)}",
+                location=location,
+                field_path="protocol.recovery_route",
+            )
+        value["recovery_route"] = route
+    return value

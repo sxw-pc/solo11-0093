@@ -40,6 +40,22 @@ def _write_run_meta(workdir: Path, bundle) -> None:
     write_json_atomic(workdir / config.RUN_META, meta)
 
 
+def _recovery_rows(ledger: Ledger) -> list[dict]:
+    return [
+        {
+            "attempt_id": record["attempt_id"],
+            "route": record["route"],
+            "resolution": record["resolution"],
+            "snapshot_id": record["snapshot_id"],
+            "parent_snapshot_id": record["parent_snapshot_id"],
+            "payload_hash": record["payload_hash"],
+            "evidence": record["evidence"],
+            "reasons": record["reasons"],
+        }
+        for record in ledger.recovery_records()
+    ]
+
+
 def run_scenario(
     scenario_path: str | Path,
     workdir: str | Path,
@@ -56,14 +72,17 @@ def run_scenario(
     store = SnapshotStore(workdir_path)
     if reset:
         store.reset()
-    ledger = Ledger(store.ledger_path, reset=True)
+    ledger = Ledger(store.ledger_path, reset=reset)
     try:
-        initial = store.initialize(bundle.initial_snapshot, bundle.table.partition_columns)
-        ledger.audit_snapshot(initial, store.load_commit(initial.snapshot_id))
+        if reset:
+            initial = store.initialize(bundle.initial_snapshot, bundle.table.partition_columns)
+            ledger.audit_snapshot(initial, store.load_commit(initial.snapshot_id))
         engine = ProtocolEngine(bundle.table, store, ledger, bundle.protocol)
         decisions = [engine.submit(attempt) for attempt in bundle.attempts]
         verification = store.verify()
-        report = report_json.build_report(bundle, decisions, store, verification)
+        report = report_json.build_report(
+            bundle, decisions, store, verification, _recovery_rows(ledger)
+        )
         report_json.write_json_report(workdir_path, report)
         report_md.write_markdown_report(workdir_path, report)
         report_html.write_html_report(workdir_path, report)
@@ -129,6 +148,7 @@ def explain_attempt(workdir: str | Path, attempt_id: str) -> dict:
     try:
         with Ledger(store.ledger_path, read_only=True) as ledger:
             attempt = ledger.get_attempt(attempt_id)
+            recovery = ledger.get_recovery(attempt_id)
     except Exception as exc:
         if isinstance(exc, InputError):
             raise
@@ -137,12 +157,22 @@ def explain_attempt(workdir: str | Path, attempt_id: str) -> dict:
             "audit ledger could not be read",
             details={"reason": exc.__class__.__name__},
         ) from exc
-    if attempt is None:
+    if attempt is None and recovery is None:
         raise InputError(
             "ATTEMPT_NOT_FOUND",
             "attempt id is not present in the audit ledger",
             details={"attempt_id": attempt_id},
         )
+    if recovery is not None:
+        attempt = dict(attempt or {})
+        attempt["recovery"] = {
+            "route": recovery["route"],
+            "resolution": recovery["resolution"],
+            "snapshot_id": recovery["snapshot_id"],
+            "parent_snapshot_id": recovery["parent_snapshot_id"],
+            "evidence": recovery["evidence"],
+            "reasons": recovery["reasons"],
+        }
     return attempt
 
 

@@ -150,6 +150,14 @@ writer B: add ca/part-0002  → stale base, but ca untouched, no path collision
 
 B 的快照 parent 是 A 的快照；commit 中记录逻辑 base 为 `snap-0000`，并带有 `rebase` 证据。
 
+## 恢复后的判定
+
+恢复结论先于普通判定生效：同一 `attempt_id` 再次提交时，`ProtocolEngine` 先读取 `recovery_audit`，而不是先看幂等缓存。
+
+- 已完成的恢复：同 writer/key/载荷返回 `outcome=recovered`，`resulting_snapshot_id` 为恢复结论中的快照，不新建快照；不同载荷返回 `IDEMPOTENCY_PAYLOAD_MISMATCH`。
+- 已回滚的恢复：该 attempt 没有首结果缓存，可基于其原始 base 重新判定；是否接受仍由常规冲突规则决定。
+- 结论中记录 writer/key 与恢复前不一致，或审计操作与重提操作不一致时，给出 `RECOVERY_EVIDENCE_CONFLICT`，不覆盖结论。
+
 ## 示例：重试
 
 ```text
@@ -160,3 +168,17 @@ B retry: replace us on base snap-0001, new attempt id/key → accepted (snap-000
 ```
 
 重试是新的提交，不能依赖旧尝试的判定结果；只有在幂等 key 与载荷都相同时才会重放。
+
+## 示例：发布中恢复
+
+```text
+A: add us/part-0003
+   intent 落盘 → 快照目录 → current 切换 → [崩溃]
+重启：
+  意图有效，快照已发布，current 指向新快照，台账缺首结果
+  → route=complete, resolution=completed
+  → 补写 snapshot_audit、attempt_audit 与幂等首结果
+同一 writer/key/载荷再次提交 → outcome=recovered（不是新建快照）
+```
+
+若协议配置 `recovery_route: rollback`，同一场景会删除未确认快照目录、把 current 退回父快照并记录 `RECOVERY_ROLLED_BACK`；随后重提该 attempt 会按普通路径重新判定并可能再次接受。两种路线都只在父快照仍可达、且没有后续确认提交时合法；一旦 current 已越过该意图，回滚给出 `RECOVERY_ROLLBACK_UNSAFE`。

@@ -20,11 +20,13 @@ class SnapshotStore:
         self.snapshots_dir = self.state_dir / config.SNAPSHOTS_DIRNAME
         self.current_path = self.state_dir / config.CURRENT_FILENAME
         self.ledger_path = self.state_dir / config.LEDGER_FILENAME
+        self.journal_dir = self.state_dir / config.JOURNAL_DIRNAME
 
     def reset(self) -> None:
         if self.state_dir.exists():
             shutil.rmtree(self.state_dir)
         self.snapshots_dir.mkdir(parents=True, exist_ok=True)
+        self.journal_dir.mkdir(parents=True, exist_ok=True)
 
     def initialize(self, initial_snapshot: Snapshot, partition_columns: tuple[str, ...]) -> Snapshot:
         if self.current_path.exists():
@@ -144,8 +146,14 @@ class SnapshotStore:
         added_paths: list[str],
         removed_paths: list[str],
         rebase: dict | None,
+        parent_snapshot_id: str | None = None,
+        publish_current: bool = True,
     ) -> tuple[Snapshot, dict]:
-        parent = self.current_snapshot()
+        parent = (
+            self.load_snapshot(parent_snapshot_id)
+            if parent_snapshot_id
+            else self.current_snapshot()
+        )
         sequence = parent.sequence + 1
         snapshot_id = snapshot_helpers.next_snapshot_id(
             parent.snapshot_id, sequence, attempt.attempt_id, payload_hash, attempt.logical_time
@@ -174,8 +182,67 @@ class SnapshotStore:
             commit=commit,
         )
         self._write_snapshot(manifest, commit)
-        self._set_current(snapshot_id)
+        if publish_current:
+            self._set_current(snapshot_id)
         return snapshot_helpers.snapshot_from_manifest(manifest, files), commit
+
+    def prepare_snapshot(
+        self,
+        *,
+        files: list[FileEntry],
+        attempt: Attempt,
+        payload_hash: str,
+        base_snapshot_id: str,
+        touched_partitions: list[str],
+        added_paths: list[str],
+        removed_paths: list[str],
+        rebase: dict | None,
+    ) -> tuple[dict, dict]:
+        """Build a manifest/commit pair for the attempt without touching disk."""
+        parent = self.current_snapshot()
+        sequence = parent.sequence + 1
+        snapshot_id = snapshot_helpers.next_snapshot_id(
+            parent.snapshot_id, sequence, attempt.attempt_id, payload_hash, attempt.logical_time
+        )
+        commit = snapshot_helpers.build_commit(
+            snapshot_id=snapshot_id,
+            parent_snapshot_id=parent.snapshot_id,
+            sequence=sequence,
+            logical_time=attempt.logical_time,
+            attempt_id=attempt.attempt_id,
+            writer_id=attempt.writer_id,
+            operation_type=attempt.operation_type,
+            base_snapshot_id=base_snapshot_id,
+            payload_hash=payload_hash,
+            touched_partitions=touched_partitions,
+            added_paths=added_paths,
+            removed_paths=removed_paths,
+            rebase=rebase,
+        )
+        manifest = snapshot_helpers.build_manifest(
+            snapshot_id=snapshot_id,
+            parent_snapshot_id=parent.snapshot_id,
+            sequence=sequence,
+            logical_time=attempt.logical_time,
+            files=files,
+            commit=commit,
+        )
+        return manifest, commit
+
+    def publish_prepared(self, manifest: dict, commit: dict) -> Snapshot:
+        """Write the immutable snapshot directory without moving current."""
+        self._write_snapshot(manifest, commit)
+        files = tuple(FileEntry.from_dict(item) for item in manifest["files"])
+        return snapshot_helpers.snapshot_from_manifest(manifest, files)
+
+    def publish_current(self, snapshot_id: str) -> None:
+        self._set_current(snapshot_id)
+
+    def remove_snapshot(self, snapshot_id: str) -> None:
+        """Delete one immutable snapshot directory; only recovery calls this."""
+        directory = self._snapshot_dir(snapshot_id)
+        if directory.exists():
+            shutil.rmtree(directory)
 
     def chain(self, current_id: str | None = None) -> list[Snapshot]:
         snapshot_id = current_id or self.current_snapshot_id()
@@ -218,75 +285,6 @@ class SnapshotStore:
         return [self.load_commit(item) for item in reversed(newer)]
 
     def verify(self) -> dict:
-        errors: list[dict] = []
-        checks = {
-            "current_pointer_resolves": True,
-            "parent_chain_contiguous": True,
-            "manifest_hashes_match": True,
-            "commit_metadata_consistent": True,
-            "file_paths_unique": True,
-            "no_orphan_snapshots": True,
-        }
+        from lakecommit.verification import verify_store
 
-        def fail(check: str, code: str, message: str, snapshot_id: str | None = None) -> None:
-            checks[check] = False
-            value: dict = {"code": code, "message": message}
-            if snapshot_id:
-                value["snapshot_id"] = snapshot_id
-            errors.append(value)
-
-        current_id: str | None = None
-        try:
-            current_id = self.current_snapshot_id()
-        except StateError as exc:
-            fail("current_pointer_resolves", exc.code, exc.message)
-        chain: list[tuple[Snapshot, dict]] = []
-        if current_id:
-            seen: set[str] = set()
-            cursor: str | None = current_id
-            while cursor:
-                if cursor in seen:
-                    fail("parent_chain_contiguous", "SNAPSHOT_CYCLE", "snapshot parent chain contains a cycle", cursor)
-                    break
-                seen.add(cursor)
-                try:
-                    snapshot = self.load_snapshot(cursor)
-                    commit = self.load_commit(cursor)
-                except StateError as exc:
-                    fail("parent_chain_contiguous", exc.code, exc.message, cursor)
-                    break
-                chain.append((snapshot, commit))
-                cursor = snapshot.parent_snapshot_id
-        for index, (snapshot, commit) in enumerate(chain):
-            snapshot_id = snapshot.snapshot_id
-            paths = [entry.path for entry in snapshot.files]
-            if len(paths) != len(set(paths)):
-                fail("file_paths_unique", "DUPLICATE_FILE_PATH", "snapshot contains duplicate file paths", snapshot_id)
-            actual_manifest_hash = snapshot_helpers.manifest_hash(snapshot.files)
-            if snapshot.manifest_hash != actual_manifest_hash:
-                fail("manifest_hashes_match", "MANIFEST_HASH_MISMATCH", "manifest file hash differs from its content", snapshot_id)
-            if commit.get("snapshot_id") != snapshot_id:
-                fail("commit_metadata_consistent", "COMMIT_SNAPSHOT_MISMATCH", "commit snapshot id differs", snapshot_id)
-            if commit.get("sequence") != snapshot.sequence:
-                fail("commit_metadata_consistent", "COMMIT_SEQUENCE_MISMATCH", "commit sequence differs", snapshot_id)
-            if commit.get("parent_snapshot_id") != snapshot.parent_snapshot_id:
-                fail("commit_metadata_consistent", "COMMIT_PARENT_MISMATCH", "commit parent differs", snapshot_id)
-            if index + 1 < len(chain) and snapshot.parent_snapshot_id != chain[index + 1][0].snapshot_id:
-                fail("parent_chain_contiguous", "PARENT_CHAIN_BROKEN", "snapshot parent chain is broken", snapshot_id)
-            if index + 1 < len(chain) and snapshot.sequence != chain[index + 1][0].sequence + 1:
-                fail("parent_chain_contiguous", "SEQUENCE_GAP", "snapshot sequence is not contiguous", snapshot_id)
-        if chain:
-            root = chain[-1][0]
-            if root.parent_snapshot_id is not None or root.sequence != 0:
-                fail("parent_chain_contiguous", "ROOT_SNAPSHOT_INVALID", "chain root is not an initial snapshot", root.snapshot_id)
-        chain_ids = {snapshot.snapshot_id for snapshot, _ in chain}
-        orphans = sorted(set(self.snapshot_ids()) - chain_ids)
-        for orphan in orphans:
-            fail("no_orphan_snapshots", "ORPHAN_SNAPSHOT", "snapshot directory is not reachable from current", orphan)
-        return {
-            "ok": not errors,
-            "current_snapshot_id": current_id,
-            "snapshot_count": len(chain),
-            "checks": [{"name": name, "ok": ok} for name, ok in checks.items()],
-            "errors": errors,
-        }
+        return verify_store(self)
