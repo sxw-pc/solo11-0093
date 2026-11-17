@@ -11,4 +11,4 @@ def debtor_exposures(store, content_root: Path, snapshot_id: str, schemas: dict,
     for invoice in invoices:
         totals[debtors[invoice["order_id"]]]+=Decimal(invoice["amount"])
     return {"snapshot_id":snapshot_id,"exposures":
-            [{"debtor_id":k,"amount":str(v)} for k,v in sorted(totals.items())]}
+            [{"debtor_id":k,"amount":str(v.quantize(Decimal("0.01")))} for k,v in sorted(totals.items())]}
