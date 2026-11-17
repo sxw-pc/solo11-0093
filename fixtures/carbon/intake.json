@@ -1,0 +1,86 @@
+{
+  "snapshot_id": "snap-0000",
+  "energy_units_per_100_bytes": "1",
+  "loads": [
+    {
+      "load_id": "ca-h2",
+      "file_path": "data/region=ca/part-0001.parquet",
+      "region": "ca",
+      "hour": 2
+    },
+    {
+      "load_id": "eu-h1",
+      "file_path": "data/region=eu/part-0001.parquet",
+      "region": "eu",
+      "hour": 1
+    },
+    {
+      "load_id": "us-h1",
+      "file_path": "data/region=us/part-0001.parquet",
+      "region": "us",
+      "hour": 1
+    },
+    {
+      "load_id": "us-h2",
+      "file_path": "data/region=us/part-0002.parquet",
+      "region": "us",
+      "hour": 2
+    }
+  ],
+  "certificates": [
+    {
+      "certificate_id": "c-flex-us",
+      "region": "us",
+      "eligible_hours": [
+        1,
+        2
+      ],
+      "units": "8.00",
+      "annual_transfer": true
+    },
+    {
+      "certificate_id": "c-h1-us",
+      "region": "us",
+      "eligible_hours": [
+        1
+      ],
+      "units": "8.00",
+      "annual_transfer": true
+    },
+    {
+      "certificate_id": "c-extra-eu",
+      "region": "eu",
+      "eligible_hours": [],
+      "units": "4.00",
+      "annual_transfer": true
+    },
+    {
+      "certificate_id": "c-eu-h1",
+      "region": "eu",
+      "eligible_hours": [
+        1
+      ],
+      "units": "9.10",
+      "annual_transfer": true
+    },
+    {
+      "certificate_id": "c-ca-h2",
+      "region": "ca",
+      "eligible_hours": [
+        2
+      ],
+      "units": "3.20",
+      "annual_transfer": true
+    }
+  ],
+  "contracts": {
+    "hourly_region": {
+      "matching": "region_hour",
+      "max_uncovered": "4.00"
+    },
+    "annual_pool": {
+      "matching": "annual_transfer",
+      "max_uncovered": "0.00"
+    }
+  }
+}
