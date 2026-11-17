@@ -23,4 +23,5 @@ def test_single_region_preview_misses_bundle():
     winners=preview_single_region(data)
     assert winners==["b6","b4","b7"]
     assert sum(by[i]["value"] for i in winners)==26
+    assert len({by[i]["licensee"] for i in winners})<len(winners)
     assert by["b1"]["value"]+by["b4"]["value"]==25
