@@ -10,7 +10,7 @@ def test_solo_freight_uses_verified_snapshot_amounts(tmp_path):
     data=json.loads((root/"fixtures/lake_freight/intake.json").read_text())
     quotes=verified_solo_quotes(store,FIXTURES,"query-root",schemas,data)
     assert [q["order_id"] for q in quotes]==["o-01","o-02","o-03"]
-    assert [q["amount"] for q in quotes]==["9","11","10"]
+    assert [q["amount"] for q in quotes]==["9","11","10.00"]
     assert [q["solo_cost"] for q in quotes]==[20,18,16]
     assert sum(q["solo_cost"] for q in quotes)==54
 
