@@ -47,6 +47,14 @@
         "ca"
       ],
       "value": 16
+    },
+    {
+      "bid_id": "b7",
+      "licensee": "lic-1",
+      "regions": [
+        "eu"
+      ],
+      "value": 5
     }
   ],
   "contracts": {

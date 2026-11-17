@@ -21,6 +21,6 @@ def test_single_region_preview_misses_bundle():
     data=json.loads((root/"fixtures/license_market/intake.json").read_text())
     by={b["bid_id"]:b for b in data["bids"]}
     winners=preview_single_region(data)
-    assert winners==["b6","b4","b3"]
-    assert sum(by[i]["value"] for i in winners)==24
+    assert winners==["b6","b4","b7"]
+    assert sum(by[i]["value"] for i in winners)==26
     assert by["b1"]["value"]+by["b4"]["value"]==25
