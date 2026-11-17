@@ -1,0 +1,60 @@
+{
+  "snapshot_id": "snap-0000",
+  "table": "lake_sales_orders",
+  "regions": [
+    "ca",
+    "eu",
+    "us"
+  ],
+  "bids": [
+    {
+      "bid_id": "b1",
+      "licensee": "lic-1",
+      "regions": [
+        "ca",
+        "eu"
+      ],
+      "value": 20
+    },
+    {
+      "bid_id": "b2",
+      "licensee": "lic-2",
+      "regions": [
+        "ca"
+      ],
+      "value": 15
+    },
+    {
+      "bid_id": "b3",
+      "licensee": "lic-3",
+      "regions": [
+        "eu"
+      ],
+      "value": 3
+    },
+    {
+      "bid_id": "b4",
+      "licensee": "lic-4",
+      "regions": [
+        "us"
+      ],
+      "value": 5
+    },
+    {
+      "bid_id": "b6",
+      "licensee": "lic-1",
+      "regions": [
+        "ca"
+      ],
+      "value": 16
+    }
+  ],
+  "contracts": {
+    "posted_bid": {
+      "payment_rule": "winning_bid"
+    },
+    "externality_fee": {
+      "payment_rule": "licensee_externality"
+    }
+  }
+}
