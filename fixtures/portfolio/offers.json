@@ -1,0 +1,55 @@
+{
+  "debtors": {
+    "o-01": "d-A",
+    "o-02": "d-B",
+    "o-03": "d-A",
+    "o-04": "d-C"
+  },
+  "offers": [
+    {
+      "offer_id": "cover-A",
+      "debtors": [
+        "d-A"
+      ],
+      "premium": "3.00",
+      "coverage_fraction": "1.00"
+    },
+    {
+      "offer_id": "cover-BC",
+      "debtors": [
+        "d-B",
+        "d-C"
+      ],
+      "premium": "4.00",
+      "coverage_fraction": "1.00"
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "a-default",
+      "probability": "0.50",
+      "defaults": [
+        "d-A"
+      ]
+    },
+    {
+      "scenario_id": "bc-default",
+      "probability": "0.20",
+      "defaults": [
+        "d-B",
+        "d-C"
+      ]
+    },
+    {
+      "scenario_id": "no-default",
+      "probability": "0.30",
+      "defaults": []
+    }
+  ],
+  "premium_budget": "4.00",
+  "capital_loss_limit": "20.00",
+  "authorized_contracts": [
+    "nominal_yield",
+    "capital_guard"
+  ]
+}

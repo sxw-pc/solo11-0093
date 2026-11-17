@@ -1,0 +1,7 @@
+id: add_files_accepted
+name: Add files on the current base
+description: One writer adds a new file to an up-to-date snapshot.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/01_add_files.jsonl
+protocol:
+  allow_safe_rebase: true

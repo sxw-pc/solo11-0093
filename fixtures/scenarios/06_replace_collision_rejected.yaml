@@ -1,0 +1,7 @@
+id: replace_collision_rejected
+name: Replacement path collision
+description: A partition replacement reuses a path owned by another partition.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/06_replace_collision.jsonl
+protocol:
+  allow_safe_rebase: true

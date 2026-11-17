@@ -1,0 +1,7 @@
+id: replace_partition_accepted
+name: Whole partition replacement
+description: A writer replaces every file in the eu partition on the current base.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/05_replace_partition.jsonl
+protocol:
+  allow_safe_rebase: true

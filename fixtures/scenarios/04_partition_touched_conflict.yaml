@@ -1,0 +1,7 @@
+id: partition_touched_conflict
+name: Partition touched after base
+description: A stale partition replacement conflicts with an accepted replacement in the same partition.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/04_partition_touched.jsonl
+protocol:
+  allow_safe_rebase: true

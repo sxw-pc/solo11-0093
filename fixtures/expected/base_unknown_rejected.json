@@ -1,0 +1,196 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "a-alpha-009",
+      "base_snapshot_id": "snap-9999",
+      "conflict_codes": [
+        "BASE_SNAPSHOT_UNKNOWN"
+      ],
+      "idempotency_key": "idem-alpha-009",
+      "logical_time": "2024-01-01T00:09:00Z",
+      "operation": {
+        "files": [
+          {
+            "content_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "partition": {
+              "region": "ca"
+            },
+            "path": "data/region=ca/part-0002.parquet",
+            "row_count": 35,
+            "size_bytes": 450
+          }
+        ],
+        "type": "add_files"
+      },
+      "operation_type": "add_files",
+      "outcome": "rejected",
+      "payload_hash": "ee8b6235e8ff6337555a4c14ba5d6148f7cde3460e4b234882b679f0a40bb10c",
+      "reasons": [
+        {
+          "code": "BASE_SNAPSHOT_UNKNOWN",
+          "details": {
+            "base_snapshot_id": "snap-9999"
+          },
+          "message": "base snapshot does not exist in this snapshot chain",
+          "severity": "error"
+        }
+      ],
+      "rebase": null,
+      "replay": null,
+      "resulting_snapshot_id": null,
+      "retry_of_attempt_id": null,
+      "retry_required": true,
+      "snapshot_created": false,
+      "status": "rejected",
+      "writer_id": "writer-alpha"
+    }
+  ],
+  "final_snapshot": {
+    "file_count": 4,
+    "files": [
+      {
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "partition": {
+          "region": "ca"
+        },
+        "path": "data/region=ca/part-0001.parquet",
+        "row_count": 20,
+        "size_bytes": 320
+      },
+      {
+        "content_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "partition": {
+          "region": "eu"
+        },
+        "path": "data/region=eu/part-0001.parquet",
+        "row_count": 70,
+        "size_bytes": 910
+      },
+      {
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0001.parquet",
+        "row_count": 100,
+        "size_bytes": 1200
+      },
+      {
+        "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0002.parquet",
+        "row_count": 60,
+        "size_bytes": 780
+      }
+    ],
+    "logical_time": "2024-01-01T00:00:00Z",
+    "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+    "parent_snapshot_id": null,
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "initial_snapshot": {
+    "file_count": 4,
+    "logical_time": "2024-01-01T00:00:00Z",
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "protocol": {
+    "allow_idempotency_mismatch": false,
+    "allow_safe_rebase": true
+  },
+  "run_fingerprint": "4eb08ef163d0dfe8b01e41237ebb856545d20c2677722fcc6e6a226c9870e2f6",
+  "scenario": {
+    "description": "A writer submits against a snapshot id outside the local chain.",
+    "id": "base_unknown_rejected",
+    "name": "Unknown base snapshot"
+  },
+  "schema_version": "1.0",
+  "snapshot_chain": [
+    {
+      "added_paths": [
+        "data/region=ca/part-0001.parquet",
+        "data/region=eu/part-0001.parquet",
+        "data/region=us/part-0001.parquet",
+        "data/region=us/part-0002.parquet"
+      ],
+      "attempt_id": null,
+      "file_count": 4,
+      "logical_time": "2024-01-01T00:00:00Z",
+      "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+      "operation_type": "bootstrap",
+      "parent_snapshot_id": null,
+      "rebase": null,
+      "removed_paths": [],
+      "sequence": 0,
+      "snapshot_id": "snap-0000",
+      "touched_partitions": [
+        "region=ca",
+        "region=eu",
+        "region=us"
+      ],
+      "writer_id": null
+    }
+  ],
+  "state_verification": {
+    "checks": [
+      {
+        "name": "current_pointer_resolves",
+        "ok": true
+      },
+      {
+        "name": "parent_chain_contiguous",
+        "ok": true
+      },
+      {
+        "name": "manifest_hashes_match",
+        "ok": true
+      },
+      {
+        "name": "commit_metadata_consistent",
+        "ok": true
+      },
+      {
+        "name": "file_paths_unique",
+        "ok": true
+      },
+      {
+        "name": "no_orphan_snapshots",
+        "ok": true
+      }
+    ],
+    "current_snapshot_id": "snap-0000",
+    "errors": [],
+    "ok": true,
+    "snapshot_count": 1
+  },
+  "summary": {
+    "accepted": 0,
+    "applied": 0,
+    "attempts": 1,
+    "conflict_code_counts": {
+      "BASE_SNAPSHOT_UNKNOWN": 1
+    },
+    "final_file_count": 4,
+    "rejected": 1,
+    "replayed": 0,
+    "retry_required": 1,
+    "safe_rebases": 0,
+    "snapshots_created": 0
+  },
+  "table": {
+    "file_fields": [
+      "path",
+      "partition",
+      "size_bytes",
+      "row_count",
+      "content_hash"
+    ],
+    "partition_columns": [
+      "region"
+    ],
+    "table_name": "lake_sales_orders"
+  }
+}
