@@ -1,0 +1,81 @@
+{
+  "snapshot_id": "query-root",
+  "slot_capacity": {
+    "1": 2,
+    "2": 1
+  },
+  "requests": [
+    {
+      "request_id": "qA",
+      "tenant": "north",
+      "file_paths": [
+        "data/region=us/v1.jsonl",
+        "data/region=us/v2.jsonl"
+      ],
+      "minimum_amount": "0",
+      "value": 10
+    },
+    {
+      "request_id": "qB",
+      "tenant": "south",
+      "file_paths": [
+        "data/region=us/v1.jsonl"
+      ],
+      "minimum_amount": "10",
+      "value": 8
+    },
+    {
+      "request_id": "qC",
+      "tenant": "north",
+      "file_paths": [
+        "data/region=us/v2.jsonl"
+      ],
+      "minimum_amount": "11",
+      "value": 7
+    },
+    {
+      "request_id": "qD",
+      "tenant": "south",
+      "file_paths": [
+        "data/region=us/v1.jsonl"
+      ],
+      "minimum_amount": "9",
+      "value": 6
+    }
+  ],
+  "contracts": {
+    "certified_close": {
+      "eligible_slots": {
+        "qA": [
+          1
+        ],
+        "qB": [
+          1
+        ],
+        "qC": [
+          2
+        ],
+        "qD": [
+          2
+        ]
+      }
+    },
+    "exploratory_quick": {
+      "eligible_slots": {
+        "qA": [
+          1
+        ],
+        "qB": [
+          1
+        ],
+        "qC": [
+          2
+        ],
+        "qD": [
+          1,
+          2
+        ]
+      }
+    }
+  }
+}
