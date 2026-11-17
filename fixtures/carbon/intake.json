@@ -76,7 +76,7 @@
   "contracts": {
     "hourly_region": {
       "matching": "region_hour",
-      "max_uncovered": "4.00"
+      "max_uncovered": "3.50"
     },
     "annual_pool": {
       "matching": "annual_transfer",
