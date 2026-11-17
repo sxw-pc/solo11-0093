@@ -12,6 +12,8 @@ def test_license_regions_are_actual_committed_snapshot_partitions():
     assert data["table"]==table["table_name"]
     assert set(data["regions"])=={f["partition"]["region"] for f in snapshot["files"]}
     assert all(len(f["content_hash"])==64 for f in snapshot["files"])
+    assert {r:sum(f["row_count"] for f in snapshot["files"] if f["partition"]["region"]==r) for r in data["regions"]}=={"ca":20,"eu":70,"us":160}
+    assert set(data["owners"])==set(data["regions"])
 
 
 def test_single_region_preview_misses_bundle():

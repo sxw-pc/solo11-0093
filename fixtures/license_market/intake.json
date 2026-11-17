@@ -50,11 +50,16 @@
     }
   ],
   "contracts": {
-    "posted_bid": {
-      "payment_rule": "winning_bid"
+    "row_weighted": {
+      "royalty_rule": "partition_row_share"
     },
-    "externality_fee": {
-      "payment_rule": "licensee_externality"
+    "standalone_floor": {
+      "royalty_rule": "owner_outside_option_then_equal_surplus"
     }
+  },
+  "owners": {
+    "ca": "owner-ca",
+    "eu": "owner-eu",
+    "us": "owner-us"
   }
 }
