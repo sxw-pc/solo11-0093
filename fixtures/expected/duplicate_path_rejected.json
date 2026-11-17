@@ -1,0 +1,198 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "a-alpha-002",
+      "base_snapshot_id": "snap-0000",
+      "conflict_codes": [
+        "FILE_PATH_DUPLICATE"
+      ],
+      "idempotency_key": "idem-alpha-002",
+      "logical_time": "2024-01-01T00:02:00Z",
+      "operation": {
+        "files": [
+          {
+            "content_hash": "6666666666666666666666666666666666666666666666666666666666666666",
+            "partition": {
+              "region": "us"
+            },
+            "path": "data/region=us/part-0001.parquet",
+            "row_count": 101,
+            "size_bytes": 1300
+          }
+        ],
+        "type": "add_files"
+      },
+      "operation_type": "add_files",
+      "outcome": "rejected",
+      "payload_hash": "0195c3eaf1f690795e2ab6dcbf95c1e2407441d6d6c8ec5a950443294d82df20",
+      "reasons": [
+        {
+          "code": "FILE_PATH_DUPLICATE",
+          "details": {
+            "paths": [
+              "data/region=us/part-0001.parquet"
+            ]
+          },
+          "message": "added file paths already exist in the current snapshot",
+          "severity": "error"
+        }
+      ],
+      "rebase": null,
+      "replay": null,
+      "resulting_snapshot_id": null,
+      "retry_of_attempt_id": null,
+      "retry_required": false,
+      "snapshot_created": false,
+      "status": "rejected",
+      "writer_id": "writer-alpha"
+    }
+  ],
+  "final_snapshot": {
+    "file_count": 4,
+    "files": [
+      {
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "partition": {
+          "region": "ca"
+        },
+        "path": "data/region=ca/part-0001.parquet",
+        "row_count": 20,
+        "size_bytes": 320
+      },
+      {
+        "content_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "partition": {
+          "region": "eu"
+        },
+        "path": "data/region=eu/part-0001.parquet",
+        "row_count": 70,
+        "size_bytes": 910
+      },
+      {
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0001.parquet",
+        "row_count": 100,
+        "size_bytes": 1200
+      },
+      {
+        "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0002.parquet",
+        "row_count": 60,
+        "size_bytes": 780
+      }
+    ],
+    "logical_time": "2024-01-01T00:00:00Z",
+    "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+    "parent_snapshot_id": null,
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "initial_snapshot": {
+    "file_count": 4,
+    "logical_time": "2024-01-01T00:00:00Z",
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "protocol": {
+    "allow_idempotency_mismatch": false,
+    "allow_safe_rebase": true
+  },
+  "run_fingerprint": "40dbeff370218841be2146ca9fc0e0ecb7ca1db8ffcb81de05ecc4701bf1e585",
+  "scenario": {
+    "description": "An add operation collides with a path already present in the current snapshot.",
+    "id": "duplicate_path_rejected",
+    "name": "Duplicate logical path rejected"
+  },
+  "schema_version": "1.0",
+  "snapshot_chain": [
+    {
+      "added_paths": [
+        "data/region=ca/part-0001.parquet",
+        "data/region=eu/part-0001.parquet",
+        "data/region=us/part-0001.parquet",
+        "data/region=us/part-0002.parquet"
+      ],
+      "attempt_id": null,
+      "file_count": 4,
+      "logical_time": "2024-01-01T00:00:00Z",
+      "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+      "operation_type": "bootstrap",
+      "parent_snapshot_id": null,
+      "rebase": null,
+      "removed_paths": [],
+      "sequence": 0,
+      "snapshot_id": "snap-0000",
+      "touched_partitions": [
+        "region=ca",
+        "region=eu",
+        "region=us"
+      ],
+      "writer_id": null
+    }
+  ],
+  "state_verification": {
+    "checks": [
+      {
+        "name": "current_pointer_resolves",
+        "ok": true
+      },
+      {
+        "name": "parent_chain_contiguous",
+        "ok": true
+      },
+      {
+        "name": "manifest_hashes_match",
+        "ok": true
+      },
+      {
+        "name": "commit_metadata_consistent",
+        "ok": true
+      },
+      {
+        "name": "file_paths_unique",
+        "ok": true
+      },
+      {
+        "name": "no_orphan_snapshots",
+        "ok": true
+      }
+    ],
+    "current_snapshot_id": "snap-0000",
+    "errors": [],
+    "ok": true,
+    "snapshot_count": 1
+  },
+  "summary": {
+    "accepted": 0,
+    "applied": 0,
+    "attempts": 1,
+    "conflict_code_counts": {
+      "FILE_PATH_DUPLICATE": 1
+    },
+    "final_file_count": 4,
+    "rejected": 1,
+    "replayed": 0,
+    "retry_required": 0,
+    "safe_rebases": 0,
+    "snapshots_created": 0
+  },
+  "table": {
+    "file_fields": [
+      "path",
+      "partition",
+      "size_bytes",
+      "row_count",
+      "content_hash"
+    ],
+    "partition_columns": [
+      "region"
+    ],
+    "table_name": "lake_sales_orders"
+  }
+}

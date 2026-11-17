@@ -1,0 +1,7 @@
+id: file_set_accepted
+name: File-set replacement accepted
+description: A writer replaces an explicitly expected file in the current base.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/07_file_set_accepted.jsonl
+protocol:
+  allow_safe_rebase: true

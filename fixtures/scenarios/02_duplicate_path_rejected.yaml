@@ -1,0 +1,7 @@
+id: duplicate_path_rejected
+name: Duplicate logical path rejected
+description: An add operation collides with a path already present in the current snapshot.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/02_duplicate_path.jsonl
+protocol:
+  allow_safe_rebase: true

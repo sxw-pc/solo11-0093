@@ -1,0 +1,7 @@
+id: base_unknown_rejected
+name: Unknown base snapshot
+description: A writer submits against a snapshot id outside the local chain.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/09_base_unknown.jsonl
+protocol:
+  allow_safe_rebase: true

@@ -1,0 +1,235 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "a-gamma-005",
+      "base_snapshot_id": "snap-0000",
+      "conflict_codes": [],
+      "idempotency_key": "idem-gamma-005",
+      "logical_time": "2024-01-01T00:05:00Z",
+      "operation": {
+        "files": [
+          {
+            "content_hash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "partition": {
+              "region": "eu"
+            },
+            "path": "data/region=eu/part-0002.parquet",
+            "row_count": 72,
+            "size_bytes": 940
+          },
+          {
+            "content_hash": "7777777777777777777777777777777777777777777777777777777777777777",
+            "partition": {
+              "region": "eu"
+            },
+            "path": "data/region=eu/part-0003.parquet",
+            "row_count": 75,
+            "size_bytes": 980
+          }
+        ],
+        "partition": {
+          "region": "eu"
+        },
+        "type": "replace_partition"
+      },
+      "operation_type": "replace_partition",
+      "outcome": "applied",
+      "payload_hash": "50cb2d2717251e726b913323ace8178dce82396f75e5d42ca38e4428f65752d9",
+      "reasons": [
+        {
+          "code": "ACCEPTED_ON_CURRENT_BASE",
+          "details": {
+            "snapshot_id": "snap-0000"
+          },
+          "message": "attempt was evaluated against the current snapshot",
+          "severity": "info"
+        }
+      ],
+      "rebase": null,
+      "replay": null,
+      "resulting_snapshot_id": "snap-0001-edb496aad7d7",
+      "retry_of_attempt_id": null,
+      "retry_required": false,
+      "snapshot_created": true,
+      "status": "accepted",
+      "writer_id": "writer-gamma"
+    }
+  ],
+  "final_snapshot": {
+    "file_count": 5,
+    "files": [
+      {
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "partition": {
+          "region": "ca"
+        },
+        "path": "data/region=ca/part-0001.parquet",
+        "row_count": 20,
+        "size_bytes": 320
+      },
+      {
+        "content_hash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "partition": {
+          "region": "eu"
+        },
+        "path": "data/region=eu/part-0002.parquet",
+        "row_count": 72,
+        "size_bytes": 940
+      },
+      {
+        "content_hash": "7777777777777777777777777777777777777777777777777777777777777777",
+        "partition": {
+          "region": "eu"
+        },
+        "path": "data/region=eu/part-0003.parquet",
+        "row_count": 75,
+        "size_bytes": 980
+      },
+      {
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0001.parquet",
+        "row_count": 100,
+        "size_bytes": 1200
+      },
+      {
+        "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "partition": {
+          "region": "us"
+        },
+        "path": "data/region=us/part-0002.parquet",
+        "row_count": 60,
+        "size_bytes": 780
+      }
+    ],
+    "logical_time": "2024-01-01T00:05:00Z",
+    "manifest_hash": "7041cd611e949821364fafeb2a84b8e0eb3ba68df52ec1cbc02c1fe02c8e6290",
+    "parent_snapshot_id": "snap-0000",
+    "sequence": 1,
+    "snapshot_id": "snap-0001-edb496aad7d7"
+  },
+  "initial_snapshot": {
+    "file_count": 4,
+    "logical_time": "2024-01-01T00:00:00Z",
+    "sequence": 0,
+    "snapshot_id": "snap-0000"
+  },
+  "protocol": {
+    "allow_idempotency_mismatch": false,
+    "allow_safe_rebase": true
+  },
+  "run_fingerprint": "9fa3598ca246eb19ddee26e71b0b7201bfbb8e7a642f77cd58da1db635cb797d",
+  "scenario": {
+    "description": "A writer replaces every file in the eu partition on the current base.",
+    "id": "replace_partition_accepted",
+    "name": "Whole partition replacement"
+  },
+  "schema_version": "1.0",
+  "snapshot_chain": [
+    {
+      "added_paths": [
+        "data/region=ca/part-0001.parquet",
+        "data/region=eu/part-0001.parquet",
+        "data/region=us/part-0001.parquet",
+        "data/region=us/part-0002.parquet"
+      ],
+      "attempt_id": null,
+      "file_count": 4,
+      "logical_time": "2024-01-01T00:00:00Z",
+      "manifest_hash": "c9084a3775a8040544e7833d4cde366053bd2cf5c9e341e3e641e3aa6e521472",
+      "operation_type": "bootstrap",
+      "parent_snapshot_id": null,
+      "rebase": null,
+      "removed_paths": [],
+      "sequence": 0,
+      "snapshot_id": "snap-0000",
+      "touched_partitions": [
+        "region=ca",
+        "region=eu",
+        "region=us"
+      ],
+      "writer_id": null
+    },
+    {
+      "added_paths": [
+        "data/region=eu/part-0002.parquet",
+        "data/region=eu/part-0003.parquet"
+      ],
+      "attempt_id": "a-gamma-005",
+      "file_count": 5,
+      "logical_time": "2024-01-01T00:05:00Z",
+      "manifest_hash": "7041cd611e949821364fafeb2a84b8e0eb3ba68df52ec1cbc02c1fe02c8e6290",
+      "operation_type": "replace_partition",
+      "parent_snapshot_id": "snap-0000",
+      "rebase": null,
+      "removed_paths": [
+        "data/region=eu/part-0001.parquet"
+      ],
+      "sequence": 1,
+      "snapshot_id": "snap-0001-edb496aad7d7",
+      "touched_partitions": [
+        "region=eu"
+      ],
+      "writer_id": "writer-gamma"
+    }
+  ],
+  "state_verification": {
+    "checks": [
+      {
+        "name": "current_pointer_resolves",
+        "ok": true
+      },
+      {
+        "name": "parent_chain_contiguous",
+        "ok": true
+      },
+      {
+        "name": "manifest_hashes_match",
+        "ok": true
+      },
+      {
+        "name": "commit_metadata_consistent",
+        "ok": true
+      },
+      {
+        "name": "file_paths_unique",
+        "ok": true
+      },
+      {
+        "name": "no_orphan_snapshots",
+        "ok": true
+      }
+    ],
+    "current_snapshot_id": "snap-0001-edb496aad7d7",
+    "errors": [],
+    "ok": true,
+    "snapshot_count": 2
+  },
+  "summary": {
+    "accepted": 1,
+    "applied": 1,
+    "attempts": 1,
+    "conflict_code_counts": {},
+    "final_file_count": 5,
+    "rejected": 0,
+    "replayed": 0,
+    "retry_required": 0,
+    "safe_rebases": 0,
+    "snapshots_created": 1
+  },
+  "table": {
+    "file_fields": [
+      "path",
+      "partition",
+      "size_bytes",
+      "row_count",
+      "content_hash"
+    ],
+    "partition_columns": [
+      "region"
+    ],
+    "table_name": "lake_sales_orders"
+  }
+}
