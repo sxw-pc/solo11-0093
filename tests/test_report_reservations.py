@@ -19,3 +19,10 @@ def test_local_slot_first_preview_drops_shareable_jobs():
     data=json.loads((root/"fixtures/report_reservations/intake.json").read_text())
     assert preview_reservations(data,"certified_close")["placed"]=={"qA":1,"qC":2}
     assert preview_reservations(data,"exploratory_quick")["placed"]=={"qA":1,"qC":2}
+
+
+def test_qd_has_two_authorized_service_obligations():
+    root=Path(__file__).parents[1]
+    data=json.loads((root/"fixtures/report_reservations/intake.json").read_text())
+    assert data["contracts"]["certified_close"]["qD_delivery"]=="audited_slot_2_only"
+    assert data["contracts"]["exploratory_quick"]["qD_delivery"]=="provisional_slot_1_allowed"

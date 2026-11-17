@@ -58,7 +58,8 @@
         "qD": [
           2
         ]
-      }
+      },
+      "qD_delivery": "audited_slot_2_only"
     },
     "exploratory_quick": {
       "eligible_slots": {
@@ -75,7 +76,8 @@
           1,
           2
         ]
-      }
+      },
+      "qD_delivery": "provisional_slot_1_allowed"
     }
   }
 }
