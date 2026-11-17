@@ -1,0 +1,7 @@
+id: idempotent_replay
+name: Idempotent duplicate submission
+description: The same writer and key replay the first accepted decision without creating another snapshot.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/10_idempotent_replay.jsonl
+protocol:
+  allow_safe_rebase: true

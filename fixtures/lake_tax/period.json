@@ -1,0 +1,63 @@
+{
+  "terms": {
+    "o-01": {
+      "jurisdiction": "A",
+      "channel": "merchant",
+      "category": "general",
+      "sold_at": "2025-05-01"
+    },
+    "o-02": {
+      "jurisdiction": "A",
+      "channel": "marketplace",
+      "category": "general",
+      "sold_at": "2025-05-02"
+    },
+    "o-03": {
+      "jurisdiction": "B",
+      "channel": "merchant",
+      "category": "general",
+      "sold_at": "2025-05-03"
+    },
+    "o-04": {
+      "jurisdiction": "B",
+      "channel": "marketplace",
+      "category": "food",
+      "sold_at": "2025-05-04"
+    }
+  },
+  "rates": {
+    "A": {
+      "general": "0.10",
+      "food": "0.00"
+    },
+    "B": {
+      "general": "0.08",
+      "food": "0.02"
+    }
+  },
+  "rules": {
+    "A": {
+      "threshold": "15.00",
+      "allowed_bases": [
+        "all_channel_gross",
+        "merchant_only_gross"
+      ],
+      "marketplace_collects": true
+    },
+    "B": {
+      "threshold": "25.00",
+      "allowed_bases": [
+        "merchant_only_gross"
+      ],
+      "marketplace_collects": false
+    }
+  },
+  "refunds": [
+    {
+      "refund_id": "r-1",
+      "order_id": "o-01",
+      "amount": "2.00",
+      "at": "2025-05-10"
+    }
+  ]
+}
