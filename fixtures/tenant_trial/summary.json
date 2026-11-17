@@ -1,0 +1,26 @@
+{
+  "offered": {
+    "total": 60,
+    "success_observed": 27,
+    "observed": 60,
+    "used": 31
+  },
+  "not_offered": {
+    "total": 60,
+    "success_observed": 22,
+    "observed": 59,
+    "used": 4
+  },
+  "missing_outcome_ids": [
+    "tenant-001"
+  ],
+  "itt_interval": [
+    "0.0666666666667",
+    "0.0833333333333"
+  ],
+  "first_stage": "0.45",
+  "complier_interval": [
+    "0.148148148148",
+    "0.185185185185"
+  ]
+}

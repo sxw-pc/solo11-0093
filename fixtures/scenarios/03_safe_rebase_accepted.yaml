@@ -1,0 +1,7 @@
+id: safe_rebase_accepted
+name: Safe additive rebase accepted
+description: A stale additive commit targets a partition untouched by intervening commits and is safely rebased.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/03_safe_rebase.jsonl
+protocol:
+  allow_safe_rebase: true

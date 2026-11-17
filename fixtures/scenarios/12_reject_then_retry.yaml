@@ -1,0 +1,7 @@
+id: reject_then_retry
+name: Rejected commit followed by retry
+description: A stale replacement is rejected, then a new attempt based on the fresh snapshot is accepted.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/12_reject_retry.jsonl
+protocol:
+  allow_safe_rebase: true

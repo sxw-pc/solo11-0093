@@ -1,0 +1,8 @@
+id: mixed_workload
+name: Mixed writers, conflicts and replay
+description: Several writers interleave accepts, safe rebases, a stale conflict, an unknown base, a replay and a payload mismatch.
+table: ../tables/lake_sales_orders.json
+attempts: ../attempts/13_mixed_workload.jsonl
+protocol:
+  allow_safe_rebase: true
+  allow_idempotency_mismatch: true
