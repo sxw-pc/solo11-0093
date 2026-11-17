@@ -1,0 +1,54 @@
+{
+  "depot": "D",
+  "vehicle_capacity": 2,
+  "merchants": [
+    {
+      "merchant_id": "m-A",
+      "stop": "A",
+      "units": 1,
+      "order_id": "o-01"
+    },
+    {
+      "merchant_id": "m-B",
+      "stop": "B",
+      "units": 1,
+      "order_id": "o-02"
+    },
+    {
+      "merchant_id": "m-C",
+      "stop": "C",
+      "units": 1,
+      "order_id": "o-03"
+    }
+  ],
+  "distance": {
+    "D": {
+      "A": 10,
+      "B": 9,
+      "C": 8
+    },
+    "A": {
+      "D": 10,
+      "B": 2,
+      "C": 5
+    },
+    "B": {
+      "D": 9,
+      "A": 2,
+      "C": 6
+    },
+    "C": {
+      "D": 8,
+      "A": 5,
+      "B": 6
+    }
+  },
+  "contracts": {
+    "value_share": {
+      "charge_rule": "verified_order_amount"
+    },
+    "marginal_share": {
+      "charge_rule": "coalition_marginal"
+    }
+  }
+}
