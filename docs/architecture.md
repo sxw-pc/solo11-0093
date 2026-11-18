@@ -53,6 +53,9 @@ scenario.yaml
 | `runner.py` | 工作目录准备、场景执行、golden 比对、explain 查询 |
 | `cli.py` | 统一命令入口与退出码 |
 | `linecount.py` | 代码规模预算和单文件上限 |
+| `resilience_input.py` | 区域计划 intake 校验、已提交快照身份与区域覆盖 |
+| `resilience_planner.py` | 两阶段加固/修复有界搜索、合同选择、最优性和证书 |
+| `storage_resilience.py` | 区域计划入口、旧预知预览（仅作反例）与 CLI |
 
 ## 快照存储布局
 

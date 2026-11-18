@@ -137,13 +137,23 @@ attempt id 与 logical time 是传输元数据，不参与载荷哈希，因此�
 - `tools/network_guard.py` 可在测试中拦截 socket 连接并扫描禁止依赖/外部 URL。
 - `tests/test_determinism.py` 对同一场景运行两次并逐字节比较 JSON/Markdown/HTML。
 
+## 合成湖快照区域可用性计划
+
+`lakecommit/storage_resilience.py` 从已提交快照文件清单核快照身份与区域覆盖，再做两阶段规划：情景揭晓前只做一次对所有情景相同的加固（默认最多 1 台），揭晓后才按该情景修复最多 1 台故障节点。
+
+```bash
+python -m lakecommit.storage_resilience --fixture fixtures/storage_resilience/intake.json
+```
+
+fixture 事先授权两份合同：`continuous_region` 要求故障初期与修复后都无区域中断（在 B 加固，成本 6）；`eu_repair_window` 允许 east 初期仅 eu 中断并按合同补偿 2，揭晓后修复 B/C 一台，目标成本 5。旧 `preview_scenario_hardening` 只会按情景各选最便宜的 A/C，那是使用未来信息，不能合并成一份事前承诺。计划输出包含快照/文件身份、逐情景初期与恢复后逐区域状态、中断时序、可执行修复、费用/补偿与最优性证据；未知节点/区域、重复情景、负成本、未提交快照和无可行方案都会被拒绝。
+
 ## 项目结构
 
 ```text
-lakecommit/          # CLI、加载校验、协议、快照存储、台账、报告、服务
-fixtures/            # 14 个 YAML 场景、表清单、JSONL 尝试、golden
+lakecommit/          # CLI、加载校验、协议、快照存储、台账、报告、服务、区域计划
+fixtures/            # 14 个 YAML 场景、表清单、JSONL 尝试、golden、区域计划 intake
 docs/                # 架构、提交语义、fixtures、验收、限制
-tests/               # 单元、集成、golden、确定性、离线、预算测试
+tests/               # 单元、集成、golden、确定性、离线、预算、区域计划测试
 tools/               # 独立行数统计与网络保护工具
 ```
 

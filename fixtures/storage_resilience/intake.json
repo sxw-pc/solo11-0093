@@ -1,5 +1,6 @@
 {
   "snapshot_id": "snap-0000",
+  "max_hardened_nodes": 1,
   "region_replicas": {
     "ca": [
       "A",

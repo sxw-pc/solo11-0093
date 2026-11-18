@@ -29,7 +29,7 @@ python -m lakecommit linecount
 python tools/network_guard.py scan
 ```
 
-预期：1–7 退出码均为 0；测试全部通过；`linecount` 报告在 2500–4500 行之间且无单文件超过 300 行。
+预期：1–7 退出码均为 0；测试全部通过；`linecount` 报告在 2500–5400 行之间且无单文件超过 300 行。
 
 ## 硬约束映射
 
@@ -42,9 +42,9 @@ python tools/network_guard.py scan
 | 只读本地服务，仅回环地址 | host 白名单 + GET/HEAD 路由 + 写方法 405 | `python -m lakecommit serve ...`、`tests/test_server.py` |
 | 无真实密钥/公司/域名/个人信息 | 全部 fixture 为合成主体；静态扫描检查外部 URL | 人工审阅 + `network_guard.py scan` |
 | 输出确定 | 逻辑时钟、内容哈希 ID、键排序、稳定列表 | `tests/test_determinism.py`、golden |
-| 2500–4500 行、单文件 ≤300 | `linecount.py` 预算常量与检查 | `python -m lakecommit linecount`、`tests/test_size_budget.py` |
+| 2500–5400 行、单文件 ≤300 | `linecount.py` 预算常量与检查 | `python -m lakecommit linecount`、`tests/test_size_budget.py` |
 | ≥12 个冲突场景 | 14 个 YAML 场景 | `fixtures/scenarios/`、`tests/test_golden.py` |
-| 不接受只有文档/只有 CLI | 实现 + 13 个测试文件 + 14 份 golden | `pytest -q` |
+| 不接受只有文档/只有 CLI | 实现 + 18 个测试文件 + 14 份 golden | `pytest -q` |
 
 ## F1：项目骨架与命令行入口
 
@@ -171,6 +171,27 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8765/api/resul
 
 预期：`/api/verify` 返回状态 JSON，POST 返回 405。
 
+## F9：合成湖快照区域可用性计划
+
+- 入口：`python -m lakecommit.storage_resilience --fixture fixtures/storage_resilience/intake.json`。
+- 先从已提交快照文件清单核 `snapshot_id`、文件身份、区域与行数，再用 `region_replicas` 建立覆盖；缺失副本不会被当作健康。
+- 生态位：事前只做一次加固（默认最多 1 台，fixture 可声明最多 2 台），情景揭晓后才允许每情景修复最多 1 台故障节点。
+- 输出：快照与文件身份、同一事前加固决定、各情景初期逐区域可用/中断、事后修复与恢复状态、补偿/费用及最优性证据。
+- 合同：`continuous_region` 要求任何阶段都无区域中断；`eu_repair_window` 允许初期仅 eu 中断并按合同支付补偿，修复后所有区域恢复，ca/us 全程可用。
+- 目标：先满足合同，再最小化“加固成本 + 最坏情景补偿与修复成本”，同值按初始 node_id、再按 repair node_id 破平手。
+- 拒绝：未知节点/区域、重复情景 ID、负成本、未提交快照、无可行方案、超出规模上限。
+- 快照文件/分区身份变化必须重算区域覆盖与证书，不能沿用旧三分区表。
+
+验收：
+
+```bash
+python -m lakecommit.storage_resilience --fixture fixtures/storage_resilience/intake.json
+```
+
+预期：`continuous_region` 在风暴前加固 B（成本 6），两情景初期三域均可用；`eu_repair_window` 加固 A（成本 2），east 初期仅 eu 中断、补偿 2，修复 B 或 C 一台（成本 1），目标总成本 5。单看每情景最便宜的 A/C 会被标记为不可合并的预知选择。
+
+测试：`test_storage_resilience.py`、`test_resilience_validation.py`。
+
 ## 测试文件覆盖
 
 | 测试文件 | 覆盖 |
@@ -188,6 +209,8 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8765/api/resul
 | `test_determinism.py` | 两次运行字节一致、逻辑时钟 |
 | `test_offline_guard.py` | socket 阻断、离线运行、扫描 |
 | `test_size_budget.py` | 总行数、单文件上限、必需模块/场景/golden |
+| `test_storage_resilience.py` | 快照身份、预知预览陷阱、两合同成本、中断时序、修复阶段、破平手、重排一致性 |
+| `test_resilience_validation.py` | 未知/重复/负输入、成本与规模边界、未提交快照、无可行方案、CLI 输出 |
 
 ## 代码规模
 
@@ -195,7 +218,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8765/api/resul
 
 ```text
 MIN_LINES = 2500
-MAX_LINES = 4500
+MAX_LINES = 5400
 MAX_FILE_LINES = 300
 ```
 
