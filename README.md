@@ -33,6 +33,7 @@ python -m lakecommit serve --host 127.0.0.1 --port 8765 --workdir .lakecommit-de
 | `python -m lakecommit verify --workdir DIR` | 校验快照链、清单哈希、当前指针和文件路径唯一性 |
 | `python -m lakecommit verify-golden --workdir DIR` | 将规范化报告与 `fixtures/expected/` 的 golden 对比 |
 | `python -m lakecommit serve ...` | 启动只监听回环地址的只读复核台 |
+| `python -m lakecommit.freight_intake --fixture FILE` | 快照绑定的共配车队搜索与双合同发票 |
 | `python -m lakecommit linecount` | 检查总代码行数预算与单文件上限 |
 
 退出码稳定为：
@@ -126,6 +127,21 @@ attempt id 与 logical time 是传输元数据，不参与载荷哈希，因此�
 14. 陈旧新增触碰已变更分区
 
 具体 attempt 与预期行为见 [docs/fixtures.md](docs/fixtures.md)。
+
+## 快照绑定的跨商户共配结算
+
+`lakecommit/freight_intake.py` 在已提交湖快照之上签发合成共配运费发票。订单金额只能来自 `query_rows.read_snapshot_rows` 对固定快照（SHA-256、字节数、行数、schema 全部验真）的归一化结果：`cents-v1` 的整数分与 `dollars-v2` 的元先各自归一，再统一以分计价，绝不混加。
+
+```bash
+python -m lakecommit.freight_intake --fixture fixtures/lake_freight/intake.json
+```
+
+- **有界精确搜索**（`freight_routes.py`，最多 6 商户、容量 3）：每趟车 D 出发回 D，按 fixture 的有向路段累计里程（方向不对称被显式建模）；枚举全部集合划分与排列，对每个商户子联盟 `S` 独立求最便宜合法车队 `c(S)`，包含 `c(空集)=0`，绝不拿全体路线删商户充当子联盟最优。
+- **固定 fixture 验收值**：`c(A)=20 c(B)=18 c(C)=16 c(AB)=21 c(AC)=23 c(BC)=23 c(ABC)=37`；独运合计 54，合载后全体最优 37（A+B 同车 21，C 独车 16），54 不是可分摊总额。
+- **value_share 合同**：按已验真订单金额 9:11:10 分摊 37，分币用最大余数法、按稳定 `merchant_id` 破平，发票 m-A 11.10、m-B 13.57、m-C 12.33。
+- **marginal_share 合同**：Shapley 值——每个商户在全部加入排列中的边际车队成本增量平均，每个子联盟都重新求解；发票 m-A 13、m-B 12、m-C 12。
+- 两份合同都收足 37、非负、不超过各自独运上界（20/18/16），但付款主体金额不同。任一合同无法同时守住规则与上界时整体拒签，不偷偷截断单张发票（退出码 3）。
+- 文件篡改、重复订单/商户 ID、订单不在快照内、负距离/件数、缺失有向路段或车位不足均在签发前拒绝；金额或文件身份变化会因果性改变加权账单，路网边变化会重新驱动子联盟路线与边际账单。
 
 ## 离线与确定性
 
