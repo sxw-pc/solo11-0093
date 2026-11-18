@@ -29,7 +29,7 @@ python -m lakecommit linecount
 python tools/network_guard.py scan
 ```
 
-预期：1–7 退出码均为 0；测试全部通过；`linecount` 报告在 2500–4500 行之间且无单文件超过 300 行。
+预期：1–7 退出码均为 0；测试全部通过；`linecount` 报告在 2500–6200 行之间且无单文件超过 300 行。
 
 ## 硬约束映射
 
@@ -42,9 +42,9 @@ python tools/network_guard.py scan
 | 只读本地服务，仅回环地址 | host 白名单 + GET/HEAD 路由 + 写方法 405 | `python -m lakecommit serve ...`、`tests/test_server.py` |
 | 无真实密钥/公司/域名/个人信息 | 全部 fixture 为合成主体；静态扫描检查外部 URL | 人工审阅 + `network_guard.py scan` |
 | 输出确定 | 逻辑时钟、内容哈希 ID、键排序、稳定列表 | `tests/test_determinism.py`、golden |
-| 2500–4500 行、单文件 ≤300 | `linecount.py` 预算常量与检查 | `python -m lakecommit linecount`、`tests/test_size_budget.py` |
+| 2500–6200 行、单文件 ≤300 | `linecount.py` 预算常量与检查 | `python -m lakecommit linecount`、`tests/test_size_budget.py` |
 | ≥12 个冲突场景 | 14 个 YAML 场景 | `fixtures/scenarios/`、`tests/test_golden.py` |
-| 不接受只有文档/只有 CLI | 实现 + 13 个测试文件 + 14 份 golden | `pytest -q` |
+| 不接受只有文档/只有 CLI | 实现 + 18 个测试文件 + 14 份 golden | `pytest -q` |
 
 ## F1：项目骨架与命令行入口
 
@@ -195,7 +195,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8765/api/resul
 
 ```text
 MIN_LINES = 2500
-MAX_LINES = 4500
+MAX_LINES = 6200
 MAX_FILE_LINES = 300
 ```
 

@@ -33,6 +33,7 @@ python -m lakecommit serve --host 127.0.0.1 --port 8765 --workdir .lakecommit-de
 | `python -m lakecommit verify --workdir DIR` | 校验快照链、清单哈希、当前指针和文件路径唯一性 |
 | `python -m lakecommit verify-golden --workdir DIR` | 将规范化报告与 `fixtures/expected/` 的 golden 对比 |
 | `python -m lakecommit serve ...` | 启动只监听回环地址的只读复核台 |
+| `python -m lakecommit.license_intake --fixture FILE` | 对固定已提交快照执行虚构分区许可销售、分成与证书输出 |
 | `python -m lakecommit linecount` | 检查总代码行数预算与单文件上限 |
 
 退出码稳定为：

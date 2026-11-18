@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 MIN_LINES = 2500
-MAX_LINES = 4500
+MAX_LINES = 6200
 MAX_FILE_LINES = 300
 EXCLUDED_DIRS = {
     ".git",

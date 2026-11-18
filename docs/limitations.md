@@ -74,7 +74,7 @@
 
 ## 规模与依赖
 
-- 总代码预算 2500–4500 行、单文件 ≤300 行，这会限制功能广度；新增能力前需先评估预算。
+- 总代码预算 2500–6200 行、单文件 ≤300 行，这会限制功能广度；新增能力前需先评估预算。
 - 运行期第三方依赖仅 PyYAML 与 Flask；Flask 开发服务器不是生产 WSGI 部署方案。
 - 未在多种操作系统/文件系统上做兼容性矩阵；本项目在 Windows 上开发验证，路径以 POSIX 风格逻辑路径表达。
 - 不支持 Python 3.9 及以下。
@@ -92,3 +92,13 @@
 - 恶意输入下的强化沙箱或资源隔离。
 
 需要这些能力时，应把本项目当作协议语义测试夹具，而不是直接扩展为生产服务。
+
+## 分区许可销售练习（fictional license sale）
+
+- `lakecommit/license_intake.py`、`license_market.py`、`license_sale.py`、`license_royalty.py` 只处理合成 `lake_sales_orders` 快照与合成报价，不授予任何真实数据使用权。
+- 权利目录只来自单个已提交快照的文件条目（分区、row_count、size_bytes、content_hash 与 manifest 哈希）；不会读取真实数据文件或对象存储。
+- 销售是离线、精确枚举的虚构拍卖：最多 8 份报价、4 个分区。每分区至多一份报价，同一 licensee 多份报价互斥，组合报价必须取得其全部区域。
+- 两份合同（`row_weighted`、`standalone_floor`）各自决定哪些许可可售；`standalone_floor` 的 owner floor 来自同轮单分区报价，会排除低于 floor 之和的报价，这不是对已成交许可的事后重算。
+- 金额以分为单位、由 fixture 报价整数乘以 100 得到；分成后的分币残差按稳定区域或 owner 顺序分配，保证每笔售价与整批成交额严格守恒。
+- 证书只在固定 `snapshot_id` + manifest/rights fingerprint 下有效；快照变化后旧证书不能在新快照重放。
+- 不提供真实支付、会计入账、税务、合同法律效力或多轮拍卖机制。

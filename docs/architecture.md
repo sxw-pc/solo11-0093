@@ -53,7 +53,10 @@ scenario.yaml
 | `runner.py` | 工作目录准备、场景执行、golden 比对、explain 查询 |
 | `cli.py` | 统一命令入口与退出码 |
 | `linecount.py` | 代码规模预算和单文件上限 |
-
+| `license_market.py` | 从单个已提交快照构造权利目录、校验虚构报价输入 |
+| `license_sale.py` | 精确枚举合法许可组合、合同资格、证书身份与守恒检查 |
+| `license_royalty.py` | `row_weighted` 与 `standalone_floor` 的 owner 分成与分币残差 |
+| `license_intake.py` | 许可销售 fixture 加载、CLI 输出；保留旧单分区预览 |
 ## 快照存储布局
 
 ```text
@@ -121,3 +124,22 @@ state/
 ## 一致性边界
 
 快照发布与 SQLite 记录不是一个跨文件系统事务：先发布快照，再写台账和幂等缓存。若进程在两步之间崩溃，可能出现“快照已发布但台账未记录”的孤儿状态；`store.verify()` 会检查 current 可达性与孤儿目录。该项目定位为验证台，不实现生产级 WAL/恢复协议。
+
+## 虚构分区许可销售
+
+`python -B -m lakecommit.license_intake --fixture fixtures/license_market/intake.json` 只读取 `fixtures/tables/lake_sales_orders.json` 的已提交初始快照，并建立一个一次性 `SnapshotStore`，再从读回的 manifest 构造权利目录。输出包含：
+
+- 快照/文件身份：snapshot id、sequence、manifest hash、每个 region 的文件路径/大小/行数/内容哈希与 rights fingerprint；
+- 每份合同的赢家、未售区域与原因、每 owner 分成来源、按报价的守恒检查；
+- 最优候选的可复核比较（价值、赢家数、bid id 列表）。
+
+拍卖规则：
+
+1. 每 region 至多售给一份报价；同一 licensee 的多份报价互斥；组合报价必须覆盖其列出的全部 region。
+2. 先按总 `value` 最大；同值取获胜 licensee 较少者；再按排序后的 bid id 稳定破平手。
+3. `row_weighted` 把每笔售价按该报价覆盖区域的 `row_count` 精确分币，残差按稳定 region 顺序；多文件 us 行数合并，不按文件数加权。
+4. `standalone_floor` 先用同轮所有单 region 有效报价计算每 region 的最高独售价作为 floor；任何报价的售价必须覆盖其全部 region floors 之和。支付时每个 owner 至少获得其 floor，超出部分在该报价涉及的 owners 间等分，余数按 owner 稳定顺序分配。
+5. floor 与资格在竞价集合上计算，再决定可售许可证；不是对已成交许可的事后分成改写。
+6. 每笔获胜报价的 owner 分成之和必须等于该报价售价，整批分成之和必须等于成交总额。
+
+证书只在 `snapshot_id` + manifest hash + rights fingerprint 三者均匹配时有效；快照变化会使旧证书无法在新快照重放。
