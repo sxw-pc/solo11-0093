@@ -9,6 +9,7 @@ from pathlib import Path
 from lakecommit import config, linecount, runner
 from lakecommit.errors import LakeCommitError
 from lakecommit.fingerprint import pretty_json
+from lakecommit.insurance_plan import CONTRACTS
 
 
 def _summary(report: dict, workdir: str, *, golden: bool | None = None) -> dict:
@@ -82,6 +83,25 @@ def command_linecount(args: argparse.Namespace) -> int:
     return 0 if report["budget_ok"] else 3
 
 
+def command_insure(args: argparse.Namespace) -> int:
+    import json
+
+    from lakecommit import insurance_plan
+    from lakecommit.store import SnapshotStore
+
+    store = SnapshotStore(args.workdir)
+    snapshot_id = args.snapshot_id or store.current_snapshot_id()
+    schemas = {}
+    if args.schemas:
+        schemas = json.loads(Path(args.schemas).read_text(encoding="utf-8"))
+    book = insurance_plan.load_offer_book(args.offers)
+    certificate = insurance_plan.plan_insurance(
+        store, Path(args.content_root), snapshot_id, schemas, book, args.contract
+    )
+    _print_json(certificate)
+    return 0 if certificate["status"] == "purchasable" else 3
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="lakecommit",
@@ -122,6 +142,17 @@ def build_parser() -> argparse.ArgumentParser:
     counting.add_argument("--root", default=".")
     counting.add_argument("--json", action="store_true")
     counting.set_defaults(handler=command_linecount)
+
+    insure = subparsers.add_parser(
+        "insure", help="plan bounded offline credit-insurance purchases for a verified snapshot"
+    )
+    insure.add_argument("--workdir", default=str(config.DEFAULT_WORKDIR))
+    insure.add_argument("--snapshot-id", default="", help="defaults to the workdir current snapshot")
+    insure.add_argument("--content-root", required=True, help="directory holding the committed content files")
+    insure.add_argument("--schemas", default="", help="JSON file mapping committed paths to row schemas")
+    insure.add_argument("--offers", required=True, help="offer book JSON (debtors, offers, scenarios, budget)")
+    insure.add_argument("--contract", required=True, choices=list(CONTRACTS))
+    insure.set_defaults(handler=command_insure)
     return parser
 
 
